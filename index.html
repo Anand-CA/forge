@@ -149,6 +149,7 @@ if(page==="goals"){
 main.innerHTML=`<div class="eyebrow">GOALS / SKILLS</div><h1>Build your<br>skill stack.</h1>
 <div class="exercise"><div class="eyebrow">24-YEAR-OLD SKILL CHECKLIST</div><p style="color:var(--muted);font-size:12px;line-height:1.5">A practical sample checklist. Mark a skill as learned when you can genuinely use it.</p><div id="goalList"></div></div><div class="exercise"><div class="eyebrow">ADD YOUR OWN</div><input id="goalText" class="money-input" style="font-size:15px" placeholder="e.g. System design"><button class="save-inline" onclick="addGoal()">ADD SKILL</button></div>`; renderGoals(); return;
 }
+}
 function getWaterInterval(){return Number(localStorage.getItem("forgeWaterInterval")||"2")}
 function isWaterEnabled(){return localStorage.getItem("forgeWaterEnabled")==="1"}
 function nextWaterTime(){const now=new Date(),interval=getWaterInterval(),next=new Date(now);next.setMinutes(0,0,0);let hour=now.getHours()+1;while(hour%interval!==0)hour++;next.setHours(hour);return next}
