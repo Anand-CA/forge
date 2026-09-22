@@ -193,6 +193,8 @@ async function finishAuth(d){
   localStorage.setItem("forgeSession",JSON.stringify(d));
   document.getElementById("authGate").style.display="none";
   document.getElementById("forgeApp").style.display="block";
+  const migrationKey="forgeMigrated_"+d.user.id;
+  if(!localStorage.getItem(migrationKey)){await migrateLocalData();localStorage.setItem(migrationKey,"1");}
   await loadCloudData();
   render();
 }
@@ -238,7 +240,7 @@ async function migrateLocalData(){
     }
     const localTodos=readJSON("forgeTodos",[]);
     for(const todo of localTodos){
-      await dbRequest("todos",{method:"POST",headers:{"Prefer":"resolution=ignore-duplicates"},body:JSON.stringify({id:todo.id, user_id:authSession.user.id,text:todo.text,due_date:todo.date,done:!!todo.done})}).catch(()=>{});
+      await dbRequest("todos",{method:"POST",headers:{"Prefer":"resolution=ignore-duplicates"},body:JSON.stringify({user_id:authSession.user.id,text:todo.text,due_date:todo.date,done:!!todo.done})}).catch(()=>{});
     }
   }catch(e){console.error("Local migration failed",e)}
 }
