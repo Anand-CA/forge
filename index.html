@@ -125,8 +125,31 @@ ${[
 ].map((x,i)=>`<div class="exercise" id="meal${i}" onclick="toggleMeal(${i})" style="cursor:pointer">
 <div class="ex-top"><div><div class="num">${x[0]}</div><div class="muscle">MEAL ${i+1}</div><div class="name">${x[1]}</div></div><div class="lastbox">○</div></div>
 <div style="font-size:11px;color:var(--muted);margin-top:9px">${x[2]}</div></div>`).join("")}
-<div class="exercise"><div class="eyebrow">HYDRATION</div><div class="name" style="margin-top:9px">Water reminder</div><p style="color:var(--muted);font-size:12px">Keep water visible during WFH and around training.</p><button class="save-inline" onclick="enableWaterPush()">ENABLE 2-HOUR WATER NOTIFICATIONS</button></div>`; return;
+<div class="exercise"><div class="eyebrow">HYDRATION</div><div class="name" style="margin-top:9px">Water reminder</div><div style="display:flex;justify-content:space-between;align-items:end;margin-top:14px;padding:12px;border:1px solid var(--line);border-radius:14px;background:#0d0d0d"><div><div style="font-size:9px;color:var(--muted);text-transform:uppercase">Next reminder in</div><div id="waterCountdown" style="font-size:25px;font-weight:900;letter-spacing:-.05em;margin-top:3px">--:--:--</div></div><div style="text-align:right"><div style="font-size:9px;color:var(--muted);text-transform:uppercase">Current time</div><div id="waterClock" style="font-size:14px;font-weight:800;margin-top:6px">--:--:--</div></div></div><p style="color:var(--muted);font-size:12px;margin-bottom:0">Reminder schedule: every 2 hours. The countdown follows your phone's local time.</p><button class="save-inline" onclick="enableWaterPush()">ENABLE 2-HOUR WATER NOTIFICATIONS</button></div>`; startWaterTimer(); return;
 }
+}
+function updateWaterTimer(){
+  const countdown=document.getElementById("waterCountdown");
+  const clock=document.getElementById("waterClock");
+  if(!countdown||!clock)return;
+  const now=new Date();
+  const next=new Date(now);
+  next.setMinutes(0,0,0);
+  next.setHours(now.getHours()+(now.getMinutes()>=0?1:0));
+  while(next.getHours()%2!==0) next.setHours(next.getHours()+1);
+  const diff=Math.max(0,next-now);
+  const total=Math.floor(diff/1000);
+  const h=String(Math.floor(total/3600)).padStart(2,"0");
+  const m=String(Math.floor((total%3600)/60)).padStart(2,"0");
+  const s=String(total%60).padStart(2,"0");
+  countdown.textContent=h+":"+m+":"+s;
+  clock.textContent=now.toLocaleTimeString([], {hour:"2-digit",minute:"2-digit",second:"2-digit"});
+}
+let waterTimer;
+function startWaterTimer(){
+  clearInterval(waterTimer);
+  updateWaterTimer();
+  waterTimer=setInterval(updateWaterTimer,1000);
 }
 function toggleMeal(i){
 const el=document.getElementById("meal"+i);
