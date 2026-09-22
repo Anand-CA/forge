@@ -115,7 +115,7 @@ ${[
 ].map((x,i)=>`<div class="exercise" id="meal${i}" onclick="toggleMeal(${i})" style="cursor:pointer">
 <div class="ex-top"><div><div class="num">${x[0]}</div><div class="muscle">MEAL ${i+1}</div><div class="name">${x[1]}</div></div><div class="lastbox">○</div></div>
 <div style="font-size:11px;color:var(--muted);margin-top:9px">${x[2]}</div></div>`).join("")}
-<div class="exercise"><div class="eyebrow">HYDRATION</div><div class="name" style="margin-top:9px">Water reminder</div><p style="color:var(--muted);font-size:12px">Keep water visible during WFH and around training.</p><button class="save-inline" onclick="toast('Hydration reminder set')">SET REMINDER</button></div>`; return;
+<div class="exercise"><div class="eyebrow">HYDRATION</div><div class="name" style="margin-top:9px">Water reminder</div><p style="color:var(--muted);font-size:12px">Keep water visible during WFH and around training.</p><button class="save-inline" onclick="enableWaterPush()">ENABLE 2-HOUR WATER NOTIFICATIONS</button></div>`; return;
 }
 }
 function toggleMeal(i){
@@ -127,6 +127,31 @@ el.querySelector(".lastbox").innerHTML=done?"○":"✓";
 if(!done)toast("Meal completed ✓");
 }
 function toast(t){let x=document.getElementById("toast");x.textContent=t;x.style.display="block";setTimeout(()=>x.style.display="none",1700)}
+async function enableWaterPush(){
+  if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) { toast("Push notifications are not supported here"); return; }
+  try {
+    const permission = await Notification.requestPermission();
+    if (permission !== "granted") { toast("Notification permission is required"); return; }
+    const registration = await navigator.serviceWorker.ready;
+    const existing = await registration.pushManager.getSubscription();
+    const subscription = existing || await registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+    });
+    const response = await fetch("/.netlify/functions/subscribe", {
+      method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify(subscription)
+    });
+    if (!response.ok) throw new Error("Subscription failed");
+    toast("Water notifications enabled ✓");
+  } catch (err) { console.error(err); toast("Could not enable notifications"); }
+}
+function urlBase64ToUint8Array(base64String){
+  const padding = "=".repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const rawData = atob(base64);
+  return Uint8Array.from([...rawData].map(char => char.charCodeAt(0)));
+}
+const VAPID_PUBLIC_KEY = "BJwiYGNhfbLERX7zCAdCfQFlDmfKHF2uOFo2KjJvsIEwRq_c4_DQHA_4MmBGexqbrzgznWY6eTrzp_Xeti1ZGo0";
 render();
 </script>
 <script>
