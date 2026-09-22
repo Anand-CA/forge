@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "dependencies": {
-    "@netlify/blobs": "^10.0.0",
+    "@netlify/blobs": "^11.1.0",
     "@netlify/functions": "^4.2.0",
     "web-push": "^3.6.7"
   }
