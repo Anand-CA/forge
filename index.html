@@ -99,7 +99,7 @@ area.innerHTML=html+"</section>";
 }
 function openSheet(e,m){current=e;sheetName.textContent=e;sheetMuscle.textContent=m;let sets=getSets(e);i1.value=sets[0];i2.value=sets[1];i3.value=sets[2];sheetBg.classList.add("open")}
 function closeSheet(){sheetBg.classList.remove("open")}
-async function saveInline(e,n){
+async async function saveInline(e,n){
   const vals=[1,2,3]
     .map(s=>Number(document.getElementById(`set_${n}_${s}`).value))
     .filter(v=>Number.isFinite(v)&&v>=0);
@@ -111,7 +111,7 @@ async function saveInline(e,n){
     toast("Saved · "+saved[e].join(" / ")+" kg");
   }
 }
-function saveExercise(){
+async function saveExercise(){
 const vals=[Number(i1.value),Number(i2.value),Number(i3.value)].map(v=>Number.isFinite(v)&&v>=0?v:null);
 if(vals.some(v=>v!==null)){saved[current]=[vals[0]??0,vals[1]??0,vals[2]??0];persist();await saveWorkoutToCloud(current,saved[current]);closeSheet();render();toast("Workout saved · "+saved[current].join(" / ")+" kg")}
 }
