@@ -82,14 +82,21 @@ function renderWorkout(){
 let groups=plan[selected], area=document.getElementById("workoutArea");
 if(groups[0]==="Rest"){area.innerHTML=`<section class="section rest"><div class="eyebrow">RECOVERY DAY</div><div class="big">Rest today.<br>Come back stronger.</div><p>No workout is scheduled for ${selected}. Recovery is part of progressive overload.</p></section>`;return}
 let html=`<section class="section"><div class="section-head"><h2>${groups.join(" + ")}</h2><span>${groups.reduce((a,m)=>a+exercises[m].length,0)} exercises</span></div>`;
-let n=0;groups.forEach(m=>exercises[m].forEach(e=>{n++;let sets=getSets(e),last=Math.max(...sets),target=last+2.5;html+=`<article class="exercise"><div class="ex-top"><div><div class="num">${String(n).padStart(2,"0")}</div><div class="muscle">${m}</div><div class="name">${e}</div></div><div class="lastbox">BEST<strong>${last} kg</strong></div></div><div class="target"><div class="target-row"><span>Next target</span><b>${target} kg</b></div><div class="inline-sets"><label class="setbox"><small>Set 1</small><input id="set_${n}_1" type="number" step=".5" value="${sets[0]}"></label><label class="setbox"><small>Set 2</small><input id="set_${n}_2" type="number" step=".5" value="${sets[1]}"></label><label class="setbox"><small>Set 3</small><input id="set_${n}_3" type="number" step=".5" value="${sets[2]}"></label></div><button class="save-inline" onclick="saveInline('${e}',${n})">SAVE EXERCISE</button></div></article>`}));
+let n=0;groups.forEach(m=>exercises[m].forEach(e=>{n++;let sets=getSets(e),last=Math.max(...sets),target=last+2.5;html+=`<article class="exercise"><div class="ex-top"><div><div class="num">${String(n).padStart(2,"0")}</div><div class="muscle">${m}</div><div class="name">${e}</div></div><div class="lastbox">BEST<strong>${last} kg</strong></div></div><div class="target"><div class="target-row"><span>Next target</span><b>${target} kg</b></div><div class="inline-sets"><label class="setbox"><small>Set 1</small><input id="set_${n}_1" type="number" step=".5" value="${sets[0]}"></label><label class="setbox"><small>Set 2</small><input id="set_${n}_2" type="number" step=".5" value="${sets[1]}"></label><label class="setbox"><small>Set 3</small><input id="set_${n}_3" type="number" step=".5" value="${sets[2]}"></label></div><button class="save-inline" onclick="saveInline('${e}',${n})">SAVE EXERCISE</button></div></article>`})); 
 area.innerHTML=html+"</section>";
 }
 function openSheet(e,m){current=e;sheetName.textContent=e;sheetMuscle.textContent=m;let sets=getSets(e);i1.value=sets[0];i2.value=sets[1];i3.value=sets[2];sheetBg.classList.add("open")}
 function closeSheet(){sheetBg.classList.remove("open")}
 function saveInline(e,n){
-const vals=[1,2,3].map(s=>Number(document.getElementById(\`set_\${n}_\${s}\`).value)).filter(v=>Number.isFinite(v)&&v>=0);
-if(vals.length){saved[e]=[vals[0]??0,vals[1]??0,vals[2]??0];persist();render();toast("Saved · "+saved[e].join(" / ")+" kg")}
+  const vals=[1,2,3]
+    .map(s=>Number(document.getElementById(`set_${n}_${s}`).value))
+    .filter(v=>Number.isFinite(v)&&v>=0);
+  if(vals.length){
+    saved[e]=[vals[0]??0,vals[1]??0,vals[2]??0];
+    persist();
+    render();
+    toast("Saved · "+saved[e].join(" / ")+" kg");
+  }
 }
 function saveExercise(){
 const vals=[Number(i1.value),Number(i2.value),Number(i3.value)].map(v=>Number.isFinite(v)&&v>=0?v:null);
@@ -146,11 +153,7 @@ function updateWaterTimer(){
   clock.textContent=now.toLocaleTimeString([], {hour:"2-digit",minute:"2-digit",second:"2-digit"});
 }
 let waterTimer;
-function startWaterTimer(){
-  clearInterval(waterTimer);
-  updateWaterTimer();
-  waterTimer=setInterval(updateWaterTimer,1000);
-}
+function startWaterTimer(){clearInterval(waterTimer);updateWaterTimer();waterTimer=setInterval(updateWaterTimer,1000)}
 function toggleMeal(i){
 const el=document.getElementById("meal"+i);
 const done=el.dataset.done==="1";
