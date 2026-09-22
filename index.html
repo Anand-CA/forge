@@ -99,20 +99,21 @@ area.innerHTML=html+"</section>";
 }
 function openSheet(e,m){current=e;sheetName.textContent=e;sheetMuscle.textContent=m;let sets=getSets(e);i1.value=sets[0];i2.value=sets[1];i3.value=sets[2];sheetBg.classList.add("open")}
 function closeSheet(){sheetBg.classList.remove("open")}
-function saveInline(e,n){
+async function saveInline(e,n){
   const vals=[1,2,3]
     .map(s=>Number(document.getElementById(`set_${n}_${s}`).value))
     .filter(v=>Number.isFinite(v)&&v>=0);
   if(vals.length){
     saved[e]=[vals[0]??0,vals[1]??0,vals[2]??0];
     persist();
+    await saveWorkoutToCloud(e,saved[e]);
     render();
     toast("Saved · "+saved[e].join(" / ")+" kg");
   }
 }
 function saveExercise(){
 const vals=[Number(i1.value),Number(i2.value),Number(i3.value)].map(v=>Number.isFinite(v)&&v>=0?v:null);
-if(vals.some(v=>v!==null)){saved[current]=[vals[0]??0,vals[1]??0,vals[2]??0];persist();closeSheet();render();toast("Workout saved · "+saved[current].join(" / ")+" kg")}
+if(vals.some(v=>v!==null)){saved[current]=[vals[0]??0,vals[1]??0,vals[2]??0];persist();await saveWorkoutToCloud(current,saved[current]);closeSheet();render();toast("Workout saved · "+saved[current].join(" / ")+" kg")}
 }
 function nav(btn,page){
 document.querySelectorAll(".nav button").forEach(x=>x.classList.remove("active"));
@@ -144,7 +145,7 @@ ${[
 ].map((x,i)=>`<div class="exercise" id="meal${i}" onclick="toggleMeal(${i})" style="cursor:pointer">
 <div class="ex-top"><div><div class="num">${x[0]}</div><div class="muscle">MEAL ${i+1}</div><div class="name">${x[1]}</div></div><div class="lastbox">○</div></div>
 <div style="font-size:11px;color:var(--muted);margin-top:9px">${x[2]}</div></div>`).join("")}
-<div class="exercise"><div class="eyebrow">HYDRATION</div><div class="name" style="margin-top:9px">Water reminder</div><div style="display:flex;justify-content:space-between;align-items:end;margin-top:14px;padding:12px;border:1px solid var(--line);border-radius:14px;background:#0d0d0d"><div><div style="font-size:9px;color:var(--muted);text-transform:uppercase">Next reminder in</div><div id="waterCountdown" style="font-size:25px;font-weight:900;letter-spacing:-.05em;margin-top:3px">OFF</div></div><div style="text-align:right"><div style="font-size:9px;color:var(--muted);text-transform:uppercase">Current time</div><div id="waterClock" style="font-size:14px;font-weight:800;margin-top:6px">--:--:--</div></div></div><div style="margin-top:12px"><div style="font-size:9px;color:var(--muted);text-transform:uppercase;margin-bottom:6px">Reminder interval</div><select id="waterInterval" class="select-input" onchange="setWaterInterval(this.value)"><option value="1">Every 1 hour</option><option value="2">Every 2 hours</option><option value="3">Every 3 hours</option></select></div><p style="color:var(--muted);font-size:12px;margin-bottom:0">Stop reminders to stop the countdown. The countdown follows your phone's local time.</p><button id="waterPushButton" class="save-inline" onclick="toggleWaterPush()">ENABLE WATER NOTIFICATIONS</button></div>`; initWaterUI(); return;
+`; initWaterUI(); return;
 }
 if(page==="todo"){
 main.innerHTML=`<div class="eyebrow">PLANNING / MONTHLY TIMELINE</div><h1>Get things<br>done.</h1>
@@ -154,56 +155,119 @@ main.innerHTML=`<div class="eyebrow">PLANNING / MONTHLY TIMELINE</div><h1>Get th
 }
 function readJSON(key,fallback){try{const raw=localStorage.getItem(key);return raw?JSON.parse(raw):fallback}catch(_){return fallback}}
 function escapeHtml(value){const d=document.createElement("div");d.textContent=String(value??"");return d.innerHTML}
-function getWaterInterval(){return Number(localStorage.getItem("forgeWaterInterval")||"2")}
-function isWaterEnabled(){return localStorage.getItem("forgeWaterEnabled")==="1"}
-function nextWaterTime(){const now=new Date(),interval=getWaterInterval(),next=new Date(now);next.setMinutes(0,0,0);let hour=now.getHours()+1;while(hour%interval!==0)hour++;next.setHours(hour);return next}
-function updateWaterTimer(){const countdown=document.getElementById("waterCountdown"),clock=document.getElementById("waterClock");if(!countdown||!clock)return;const now=new Date();clock.textContent=now.toLocaleTimeString([], {hour:"2-digit",minute:"2-digit",second:"2-digit"});if(!isWaterEnabled()){countdown.textContent="OFF";return}const total=Math.max(0,Math.floor((nextWaterTime()-now)/1000));countdown.textContent=String(Math.floor(total/3600)).padStart(2,"0")+":"+String(Math.floor((total%3600)/60)).padStart(2,"0")+":"+String(total%60).padStart(2,"0")}
-let waterTimer;
-function startWaterTimer(){clearInterval(waterTimer);updateWaterTimer();waterTimer=setInterval(updateWaterTimer,1000)}
-function initWaterUI(){const select=document.getElementById("waterInterval"),button=document.getElementById("waterPushButton");if(select)select.value=String(getWaterInterval());if(button)button.textContent=isWaterEnabled()?"STOP WATER NOTIFICATIONS":"ENABLE WATER NOTIFICATIONS";startWaterTimer()}
-function setWaterInterval(value){const interval=Math.min(3,Math.max(1,Number(value)||2));localStorage.setItem("forgeWaterInterval",String(interval));if(isWaterEnabled())enableWaterPush(true);else updateWaterTimer()}
-async function toggleWaterPush(){if(isWaterEnabled())stopWaterPush();else await enableWaterPush(false)}
-async function stopWaterPush(){try{const registration=await navigator.serviceWorker.ready;const subscription=await registration.pushManager.getSubscription();if(subscription){const response=await fetch("/.netlify/functions/unsubscribe",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({endpoint:subscription.endpoint})});if(!response.ok)throw new Error("Unsubscribe failed");await subscription.unsubscribe()}localStorage.setItem("forgeWaterEnabled","0");clearInterval(waterTimer);updateWaterTimer();const button=document.getElementById("waterPushButton");if(button)button.textContent="ENABLE WATER NOTIFICATIONS";toast("Water reminders stopped")}catch(err){console.error(err);toast("Could not stop reminders")}}
-async function enableWaterPush(silent=false){if(!("serviceWorker" in navigator)||!("PushManager" in window)||!("Notification" in window)){if(!silent)toast("Push notifications are not supported here");return}try{const permission=await Notification.requestPermission();if(permission!=="granted"){if(!silent)toast("Notification permission is required");return}const registration=await navigator.serviceWorker.ready;const existing=await registration.pushManager.getSubscription();const subscription=existing||await registration.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlBase64ToUint8Array(VAPID_PUBLIC_KEY)});const response=await fetch("/.netlify/functions/subscribe",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({...subscription.toJSON(),interval:getWaterInterval()})});if(!response.ok)throw new Error("Subscription failed");localStorage.setItem("forgeWaterEnabled","1");updateWaterTimer();const button=document.getElementById("waterPushButton");if(button)button.textContent="STOP WATER NOTIFICATIONS";if(!silent)toast("Water notifications enabled ✓")}catch(err){console.error(err);if(!silent)toast("Could not enable notifications")}}
+const SUPABASE_URL="https://ufbsxvqouogkrkeprlua.supabase.co";
+const SUPABASE_ANON_KEY="sb_publishable_ax2ZjXT1a7I3zJECFfvCEw_C6iekTgP";
+let authMode="signin",authSession=null;
 
+function supabaseHeaders(token){
+  return {"apikey":SUPABASE_ANON_KEY,"Authorization":"Bearer "+(token||SUPABASE_ANON_KEY),"Content-Type":"application/json"};
+}
+async function supabaseAuth(path,body){
+  const r=await fetch(SUPABASE_URL+"/auth/v1/"+path,{method:"POST",headers:supabaseHeaders(),body:JSON.stringify(body)});
+  const d=await r.json().catch(()=>({}));
+  if(!r.ok)throw new Error(d.error_description||d.msg||d.message||"Authentication failed");
+  return d;
+}
+function toggleAuthMode(){
+  authMode=authMode==="signin"?"signup":"signin";
+  document.getElementById("authSubmit").textContent=authMode==="signin"?"SIGN IN":"CREATE ACCOUNT";
+  document.getElementById("authToggle").textContent=authMode==="signin"?"CREATE ACCOUNT":"BACK TO SIGN IN";
+  document.getElementById("authPassword").autocomplete=authMode==="signin"?"current-password":"new-password";
+  document.getElementById("authMessage").textContent=authMode==="signin"?"Sign in to sync your workouts, todos and settings across devices.":"Create your FORGE account. Your data will belong to your account.";
+}
+async function signIn(){
+  const email=document.getElementById("authEmail").value.trim(),password=document.getElementById("authPassword").value;
+  if(!email||!password){setAuthMessage("Enter your email and password.");return}
+  setAuthBusy(true);
+  try{
+    if(authMode==="signup"){
+      const d=await supabaseAuth("signup",{email,password});
+      if(d.access_token) await finishAuth(d);
+      else {setAuthMessage("Account created. Check your email to confirm it, then sign in.");authMode="signin";document.getElementById("authSubmit").textContent="SIGN IN";document.getElementById("authToggle").textContent="CREATE ACCOUNT";}
+    }else await finishAuth(await supabaseAuth("token?grant_type=password",{email,password}));
+  }catch(e){console.error(e);setAuthMessage(e.message||"Could not authenticate.")}
+  finally{setAuthBusy(false)}
+}
+async function finishAuth(d){
+  authSession=d;
+  localStorage.setItem("forgeSession",JSON.stringify(d));
+  document.getElementById("authGate").style.display="none";
+  document.getElementById("forgeApp").style.display="block";
+  await loadCloudData();
+  render();
+}
+function setAuthMessage(m){const e=document.getElementById("authMessage");if(e)e.textContent=m}
+function setAuthBusy(b){const e=document.getElementById("authSubmit");if(e){e.disabled=b;e.style.opacity=b?".6":"1";e.textContent=b?"PLEASE WAIT":(authMode==="signin"?"SIGN IN":"CREATE ACCOUNT")}}
+function signOut(){
+  localStorage.removeItem("forgeSession");authSession=null;
+  document.getElementById("forgeApp").style.display="none";document.getElementById("authGate").style.display="flex";
+  setAuthMessage("Sign in to sync your workouts, todos and settings across devices.");
+}
+async function dbRequest(path,options={}){
+  if(!authSession?.access_token)throw new Error("Not signed in");
+  const opts={...options,headers:{...supabaseHeaders(authSession.access_token),...(options.headers||{})}};
+  const r=await fetch(SUPABASE_URL+"/rest/v1/"+path,opts);
+  if(!r.ok)throw new Error(await r.text());
+  return r.status===204?null:r.json();
+}
+async function loadCloudData(){
+  try{
+    const workouts=await dbRequest("workout_sets?select=workout_date,exercise,set1,set2,set3&order=workout_date.desc");
+    const latest={};
+    (workouts||[]).forEach(row=>{if(latest[row.exercise]===undefined)latest[row.exercise]=[Number(row.set1),Number(row.set2),Number(row.set3)]});
+    if(Object.keys(latest).length){saved=latest;persist();}
+    const todos=await dbRequest("todos?select=id,text,due_date,done,created_at&order=due_date.asc,created_at.asc");
+    localStorage.setItem("forgeTodos",JSON.stringify((todos||[]).map(t=>({id:t.id,date:t.due_date,text:t.text,done:t.done}))));
+  }catch(e){console.error("Cloud load failed",e);toast("Could not load cloud data")}
+}
+async function saveWorkoutToCloud(exercise,values){
+  try{
+    await dbRequest("workout_sets?on_conflict=user_id,workout_date,exercise",{
+      method:"POST",
+      headers:{"Prefer":"resolution=merge-duplicates,return=minimal"},
+      body:JSON.stringify({user_id:authSession.user.id,workout_date:localDateString(),exercise,set1:values[0],set2:values[1],set3:values[2]})
+    });
+  }catch(e){console.error("Workout sync failed",e);toast("Saved locally; cloud sync failed")}
+}
+async function migrateLocalData(){
+  try{
+    const localSaved=readJSON("forgeMobile",{});
+    for(const exercise of Object.keys(localSaved)){
+      const values=getSets(exercise);
+      await saveWorkoutToCloud(exercise,values);
+    }
+    const localTodos=readJSON("forgeTodos",[]);
+    for(const todo of localTodos){
+      await dbRequest("todos",{method:"POST",headers:{"Prefer":"resolution=ignore-duplicates"},body:JSON.stringify({id:todo.id, user_id:authSession.user.id,text:todo.text,due_date:todo.date,done:!!todo.done})}).catch(()=>{});
+    }
+  }catch(e){console.error("Local migration failed",e)}
+}
 function getTodos(){return readJSON("forgeTodos",[])}
 function localDateString(date=new Date()){const y=date.getFullYear(),m=String(date.getMonth()+1).padStart(2,"0"),d=String(date.getDate()).padStart(2,"0");return `${y}-${m}-${d}`}
 async function addTodo(){
   const input=document.getElementById("todoText"),dateInput=document.getElementById("todoDate");
   const text=input?.value.trim();
-  const hadSelectedDate=!!dateInput?.value;
   const selectedDate=dateInput?.value||localDateString();
   if(!text){toast("Enter a task");return}
   const todos=getTodos();
   const todo={id:"t"+Date.now(),date:selectedDate,text,done:false};
+  const savedTodo=await dbRequest("todos",{method:"POST",headers:{"Prefer":"return=representation"},body:JSON.stringify({user_id:authSession.user.id,text:todo.text,due_date:todo.date,done:false})});
+  const cloudTodo=savedTodo?.[0];
+  if(cloudTodo)todo.id=cloudTodo.id;
   todos.push(todo);
   localStorage.setItem("forgeTodos",JSON.stringify(todos));
   input.value="";
   if(dateInput)dateInput.value="";
   renderTodos();
   toast("Todo added ✓");
-  if(hadSelectedDate) await scheduleTodoPush(todo);
 }
-async function scheduleTodoPush(todo){
-  try{
-    if(!("serviceWorker" in navigator)||!("PushManager" in window)||!("Notification" in window))return;
-    if(Notification.permission!=="granted"){
-      const permission=await Notification.requestPermission();
-      if(permission!=="granted"){toast("Todo saved, but notifications are off");return}
-    }
-    const registration=await navigator.serviceWorker.ready;
-    const existing=await registration.pushManager.getSubscription();
-    const subscription=existing||await registration.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlBase64ToUint8Array(VAPID_PUBLIC_KEY)});
-    const response=await fetch("/.netlify/functions/subscribe",{
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({...subscription.toJSON(),todo:{id:todo.id,text:todo.text,date:todo.date,dueAt:new Date(todo.date+"T09:00:00").getTime()}})
-    });
-    if(!response.ok)throw new Error("Todo notification subscription failed");
-    toast("Todo reminder scheduled ✓");
-  }catch(err){console.error(err);toast("Todo saved, reminder could not be scheduled")}
+async function toggleTodo(id){
+  const todos=getTodos().map(t=>t.id===id?{...t,done:!t.done}:t);
+  localStorage.setItem("forgeTodos",JSON.stringify(todos));
+  const todo=todos.find(t=>t.id===id);
+  try{await dbRequest("todos?id=eq."+encodeURIComponent(id),{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({done:todo.done})})}catch(e){console.error("Todo sync failed",e);toast("Saved locally; cloud sync failed")}
+  renderTodos()
 }
-function toggleTodo(id){const todos=getTodos().map(t=>t.id===id?{...t,done:!t.done}:t);localStorage.setItem("forgeTodos",JSON.stringify(todos));renderTodos()}
 function renderTodos(){
   const timeline=document.getElementById("todoTimeline"),overdueBox=document.getElementById("overdueTodos");
   if(!timeline||!overdueBox)return;
@@ -236,7 +300,6 @@ function setAuthBusy(b){const e=document.getElementById("authSubmit");if(e){e.di
 function restoreAuth(){try{const s=JSON.parse(localStorage.getItem("forgeSession")||"null");if(s?.access_token){authSession=s;document.getElementById("authGate").style.display="none";document.getElementById("forgeApp").style.display="block";render();return true}}catch(_){}return false}
 function signOut(){localStorage.removeItem("forgeSession");authSession=null;document.getElementById("forgeApp").style.display="none";document.getElementById("authGate").style.display="flex";setAuthMessage("Sign in to sync your workouts, todos and settings across devices.")}
 
-const VAPID_PUBLIC_KEY = "BJwiYGNhfbLERX7zCAdCfQFlDmfKHF2uOFo2KjJvsIEwRq_c4_DQHA_4MmBGexqbrzgznWY6eTrzp_Xeti1ZGo0";
 restoreAuth();
 </script>
 <script>
