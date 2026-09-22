@@ -35,7 +35,7 @@ h2{font-size:24px;letter-spacing:-.05em;margin:0}
 .bottom{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;padding:10px 12px calc(10px + env(safe-area-inset-bottom));background:linear-gradient(transparent,#0b0b0b 22%);z-index:12}
 .nav{height:63px;background:#151515;border:1px solid #292929;border-radius:22px;display:flex;gap:3px;padding:5px;overflow-x:auto;scrollbar-width:none}.nav::-webkit-scrollbar{display:none}
 .nav button{border:0;background:transparent;color:#77746d;border-radius:17px;font-size:9px;font-weight:700;min-width:64px;flex:1}.nav button.active{background:#222;color:#fff}.nav i{display:block;font-style:normal;font-size:17px;margin-bottom:2px}
-.timeline-month{border:1px solid var(--line);border-radius:16px;background:var(--surface);margin-bottom:9px;overflow:hidden}.timeline-month summary{list-style:none;cursor:pointer;padding:15px;font-weight:800;display:flex;justify-content:space-between}.timeline-month summary::-webkit-details-marker{display:none}.timeline-items{padding:0 15px 15px;border-top:1px solid var(--line)}.todo-row{display:flex;gap:10px;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--line)}.todo-row:last-child{border-bottom:0}.todo-check{width:20px;height:20px;border:1px solid #555;border-radius:6px;flex:0 0 auto;cursor:pointer;background:#0d0d0d;color:var(--accent);display:grid;place-items:center;font-size:12px}.todo-meta{font-size:9px;color:var(--muted);margin-top:3px}.overdue{border-color:#704040}.money-input{width:100%;box-sizing:border-box;background:#0d0d0d;color:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;font-size:20px;font-weight:900;outline:none}.select-input{width:100%;background:#0d0d0d;color:#fff;border:1px solid var(--line);border-radius:10px;padding:10px;font-weight:700}.goal-row{display:flex;align-items:center;gap:11px;padding:13px 0;border-bottom:1px solid var(--line)}.goal-row:last-child{border-bottom:0}.goal-check{width:22px;height:22px;border:1px solid #555;border-radius:50%;background:#0d0d0d;color:var(--accent);display:grid;place-items:center;cursor:pointer;flex:0 0 auto}
+.timeline-month{border:1px solid var(--line);border-radius:16px;background:var(--surface);margin-bottom:9px;overflow:hidden}.timeline-month summary{list-style:none;cursor:pointer;padding:15px;font-weight:800;display:flex;justify-content:space-between}.timeline-month summary::-webkit-details-marker{display:none}.timeline-items{padding:0 15px 15px;border-top:1px solid var(--line)}.todo-row{display:flex;gap:10px;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--line)}.todo-row:last-child{border-bottom:0}.todo-check{width:20px;height:20px;border:1px solid #555;border-radius:6px;flex:0 0 auto;cursor:pointer;background:#0d0d0d;color:var(--accent);display:grid;place-items:center;font-size:12px}.todo-meta{font-size:9px;color:var(--muted);margin-top:3px}.overdue{border-color:#704040}.money-input{width:100%;box-sizing:border-box;background:#0d0d0d;color:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;font-size:20px;font-weight:900;outline:none}.select-input{width:100%;background:#0d0d0d;color:#fff;border:1px solid var(--line);border-radius:10px;padding:10px;font-weight:700}
 .sheet-bg{position:fixed;inset:0;background:#000a;display:none;align-items:end;z-index:30}.sheet-bg.open{display:flex}
 .sheet{width:100%;max-width:480px;margin:auto;background:#151515;border:1px solid #303030;border-radius:25px 25px 0 0;padding:20px 17px calc(25px + env(safe-area-inset-bottom));box-shadow:0 -20px 60px #000b}
 .grab{width:38px;height:4px;background:#4a4a4a;border-radius:4px;margin:0 auto 20px}.sheet-head{display:flex;justify-content:space-between;align-items:start}.sheet h3{font-size:26px;letter-spacing:-.05em;margin:0}.close{border:1px solid var(--line);background:var(--surface);border-radius:50%;width:35px;height:35px}
@@ -48,7 +48,7 @@ h2{font-size:24px;letter-spacing:-.05em;margin:0}
 <div class="app">
 <header class="topbar"><div class="logo">FORGE<span>●</span></div><button class="iconbtn" onclick="toast('Profile coming soon')">A</button></header>
 <main id="main"></main>
-<div class="bottom"><nav class="nav"><button class="active" onclick="nav(this,'home')"><i>⌂</i>Today</button><button onclick="nav(this,'progress')"><i>↗</i>Progress</button><button onclick="nav(this,'diet')"><i>⌁</i>Diet</button><button onclick="nav(this,'investment')"><i>₹</i>Invest</button><button onclick="nav(this,'todo')"><i>✓</i>Todo</button><button onclick="nav(this,'goals')"><i>★</i>Goals</button></nav></div>
+<div class="bottom"><nav class="nav"><button class="active" onclick="nav(this,'home')"><i>⌂</i>Today</button><button onclick="nav(this,'progress')"><i>↗</i>Progress</button><button onclick="nav(this,'diet')"><i>⌁</i>Diet</button><button onclick="nav(this,'todo')"><i>✓</i>Todo</button></nav></div>
 </div>
 <div class="sheet-bg" id="sheetBg"><div class="sheet">
 <div class="grab"></div><div class="sheet-head"><div><div class="eyebrow" id="sheetMuscle"></div><h3 id="sheetName"></h3></div><button class="close" onclick="closeSheet()">×</button></div>
@@ -135,14 +135,10 @@ ${[
 <div style="font-size:11px;color:var(--muted);margin-top:9px">${x[2]}</div></div>`).join("")}
 <div class="exercise"><div class="eyebrow">HYDRATION</div><div class="name" style="margin-top:9px">Water reminder</div><div style="display:flex;justify-content:space-between;align-items:end;margin-top:14px;padding:12px;border:1px solid var(--line);border-radius:14px;background:#0d0d0d"><div><div style="font-size:9px;color:var(--muted);text-transform:uppercase">Next reminder in</div><div id="waterCountdown" style="font-size:25px;font-weight:900;letter-spacing:-.05em;margin-top:3px">OFF</div></div><div style="text-align:right"><div style="font-size:9px;color:var(--muted);text-transform:uppercase">Current time</div><div id="waterClock" style="font-size:14px;font-weight:800;margin-top:6px">--:--:--</div></div></div><div style="margin-top:12px"><div style="font-size:9px;color:var(--muted);text-transform:uppercase;margin-bottom:6px">Reminder interval</div><select id="waterInterval" class="select-input" onchange="setWaterInterval(this.value)"><option value="1">Every 1 hour</option><option value="2">Every 2 hours</option><option value="3">Every 3 hours</option></select></div><p style="color:var(--muted);font-size:12px;margin-bottom:0">Stop reminders to stop the countdown. The countdown follows your phone's local time.</p><button id="waterPushButton" class="save-inline" onclick="toggleWaterPush()">ENABLE WATER NOTIFICATIONS</button></div>`; initWaterUI(); return;
 }
-if(page==="investment"){
-main.innerHTML=`<div class="eyebrow">MONEY / INVESTING</div><h1>Make your<br>money work.</h1>
-<div class="exercise"><div class="eyebrow">TOTAL INVESTABLE AMOUNT</div><input id="investmentAmount" class="money-input" type="number" min="0" step="100" placeholder="₹ Enter amount" value="${localStorage.getItem("forgeInvestment")||""}" oninput="saveInvestment(this.value)"><p style="color:var(--muted);font-size:11px;margin-bottom:0">Planning tool only. Enter the amount you currently have available to invest.</p></div><div id="investmentInsights"></div>`; renderInvestmentInsights(); return;
-}
 if(page==="todo"){
 main.innerHTML=`<div class="eyebrow">PLANNING / MONTHLY TIMELINE</div><h1>Get things<br>done.</h1>
-<div class="exercise"><div class="eyebrow">ADD TODO</div><input id="todoText" class="money-input" style="font-size:15px" placeholder="What needs to be done?"><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px"><input id="todoDate" class="select-input" type="date"><button class="save-inline" style="margin:0" onclick="addTodo()">ADD TODO</button></div></div>
-<div class="section-head"><h2>Timeline</h2><span>sample + your tasks</span></div><div id="todoTimeline"></div><div class="section-head" style="margin-top:22px"><h2>Overdue</h2><span>needs attention</span></div><div id="overdueTodos"></div>`; renderTodos(); return;
+<div class="exercise"><div class="eyebrow">ADD TODO</div><input id="todoText" class="money-input" style="font-size:15px" placeholder="What needs to be done?"><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px"><input id="todoDate" class="select-input" type="date"><button class="save-inline" style="margin:0" onclick="addTodo()">ADD TODO</button></div><p style="color:var(--muted);font-size:11px;margin-bottom:0">No date = today. Select a date to receive a push reminder on that date.</p></div>
+<div class="section-head"><h2>Timeline</h2><span>your tasks</span></div><div id="todoTimeline"></div><div class="section-head" style="margin-top:22px"><h2>Overdue</h2><span>needs attention</span></div><div id="overdueTodos"></div>`; renderTodos(); return;
 }
 if(page==="goals"){
 main.innerHTML=`<div class="eyebrow">GOALS / SKILLS</div><h1>Build your<br>skill stack.</h1>
@@ -166,19 +162,61 @@ async function enableWaterPush(silent=false){if(!("serviceWorker" in navigator)|
 function saveInvestment(value){localStorage.setItem("forgeInvestment",value);renderInvestmentInsights()}
 function renderInvestmentInsights(){const box=document.getElementById("investmentInsights");if(!box)return;const amount=Number(localStorage.getItem("forgeInvestment")||0);const insights=amount>0?[["Emergency reserve","Consider keeping a cash buffer for near-term needs and unexpected expenses before investing the full amount."],["Diversification","Research spreading money across diversified assets rather than concentrating everything in one stock, sector, or asset."],["Time horizon","Money needed soon generally calls for different risk and liquidity considerations than long-term money."],["Costs & tax","Compare expense ratios, platform/brokerage fees, liquidity, and applicable taxes before choosing a product."],["Research options","Broad diversified index funds/ETFs are one option to research alongside other regulated investment products. Match the choice to your goals and risk tolerance."]]:[["Start with your number","Enter the amount you can actually invest so FORGE can show planning guidance."],["Define the goal","Decide whether the money is for an emergency buffer, a near-term purchase, or long-term wealth building."],["Check risk & liquidity","Research diversification, fees, liquidity, and downside risk before choosing an investment."]];box.innerHTML=insights.map((x,i)=>`<div class="exercise"><div class="eyebrow">INSIGHT ${i+1}</div><div class="name" style="margin-top:7px">${x[0]}</div><p style="color:var(--muted);font-size:12px;line-height:1.5;margin-bottom:0">${x[1]}</p></div>`).join("")}
 
-const sampleTodos=[{id:"s1",date:"2026-09-05",text:"Review monthly budget",done:false,sample:true},{id:"s2",date:"2026-09-12",text:"Finish portfolio project README",done:false,sample:true},{id:"s3",date:"2026-09-20",text:"Back up important files",done:false,sample:true},{id:"s4",date:"2026-10-03",text:"Complete one React interview module",done:false,sample:true},{id:"s5",date:"2026-10-18",text:"Service / inspect car",done:false,sample:true},{id:"s6",date:"2026-11-08",text:"Complete one system-design practice session",done:false,sample:true}];
 function getTodos(){return readJSON("forgeTodos",[])}
-function addTodo(){const text=document.getElementById("todoText")?.value.trim(),date=document.getElementById("todoDate")?.value;if(!text||!date){toast("Enter a task and date");return}const todos=getTodos();todos.push({id:"t"+Date.now(),date,text,done:false});localStorage.setItem("forgeTodos",JSON.stringify(todos));document.getElementById("todoText").value="";renderTodos();toast("Todo added ✓")}
+function localDateString(date=new Date()){const y=date.getFullYear(),m=String(date.getMonth()+1).padStart(2,"0"),d=String(date.getDate()).padStart(2,"0");return `${y}-${m}-${d}`}
+async function addTodo(){
+  const input=document.getElementById("todoText"),dateInput=document.getElementById("todoDate");
+  const text=input?.value.trim();
+  const hadSelectedDate=!!dateInput?.value;\n  const selectedDate=dateInput?.value||localDateString();
+  if(!text){toast("Enter a task");return}
+  const todos=getTodos();
+  const todo={id:"t"+Date.now(),date:selectedDate,text,done:false};
+  todos.push(todo);
+  localStorage.setItem("forgeTodos",JSON.stringify(todos));
+  input.value="";
+  if(dateInput)dateInput.value="";
+  renderTodos();
+  toast("Todo added ✓");
+  if(dateInput?.value) await scheduleTodoPush(todo);
+  else if(selectedDate!==localDateString()) await scheduleTodoPush(todo);
+}
+async function scheduleTodoPush(todo){
+  try{
+    if(!("serviceWorker" in navigator)||!("PushManager" in window)||!("Notification" in window))return;
+    if(Notification.permission!=="granted"){
+      const permission=await Notification.requestPermission();
+      if(permission!=="granted"){toast("Todo saved, but notifications are off");return}
+    }
+    const registration=await navigator.serviceWorker.ready;
+    const existing=await registration.pushManager.getSubscription();
+    const subscription=existing||await registration.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlBase64ToUint8Array(VAPID_PUBLIC_KEY)});
+    const response=await fetch("/.netlify/functions/subscribe",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({...subscription.toJSON(),todo:{id:todo.id,text:todo.text,date:todo.date}})
+    });
+    if(!response.ok)throw new Error("Todo notification subscription failed");
+    toast("Todo reminder scheduled ✓");
+  }catch(err){console.error(err);toast("Todo saved, reminder could not be scheduled")}
+}
 function toggleTodo(id){const todos=getTodos().map(t=>t.id===id?{...t,done:!t.done}:t);localStorage.setItem("forgeTodos",JSON.stringify(todos));renderTodos()}
-function allTodos(){return [...sampleTodos,...getTodos()]}
-function renderTodos(){const timeline=document.getElementById("todoTimeline"),overdueBox=document.getElementById("overdueTodos");if(!timeline||!overdueBox)return;const today=new Date();today.setHours(0,0,0,0);const upcoming=allTodos().filter(t=>t.done||new Date(t.date+"T00:00:00")>=today),groups={};upcoming.forEach(t=>{const key=t.date.slice(0,7);(groups[key]??=[]).push(t)});timeline.innerHTML=Object.keys(groups).sort().map((month,i)=>{const items=groups[month].sort((a,b)=>a.date.localeCompare(b.date));return `<details class="timeline-month" ${i===0?"open":""}><summary>${new Date(month+"-01T00:00:00").toLocaleDateString("en-US",{month:"long",year:"numeric"})}<span>${items.length}</span></summary><div class="timeline-items">${items.map(t=>`<div class="todo-row"><button class="todo-check" onclick="toggleTodo('${t.id}')">${t.done?"✓":""}</button><div><b>${escapeHtml(t.text)}</b><div class="todo-meta">${new Date(t.date+"T00:00:00").toLocaleDateString("en-US",{day:"numeric",month:"short"})}${t.sample?" · SAMPLE":""}</div></div></div>`).join("")}</div></details>`}).join("")||`<div class="exercise"><p style="color:var(--muted);font-size:12px;margin:0">No upcoming todos.</p></div>`;const overdue=allTodos().filter(t=>!t.done&&new Date(t.date+"T00:00:00")<today);overdueBox.innerHTML=overdue.map(t=>`<div class="exercise overdue"><div class="todo-row"><button class="todo-check" onclick="toggleTodo('${t.id}')"></button><div><b>${t.text}</b><div class="todo-meta">Overdue · ${new Date(t.date+"T00:00:00").toLocaleDateString("en-US",{day:"numeric",month:"short"})}</div></div></div></div>`).join("")||`<div class="exercise"><p style="color:var(--muted);font-size:12px;margin:0">Nothing overdue.</p></div>`}
+function renderTodos(){
+  const timeline=document.getElementById("todoTimeline"),overdueBox=document.getElementById("overdueTodos");
+  if(!timeline||!overdueBox)return;
+  const today=new Date();today.setHours(0,0,0,0);
+  const all=getTodos();
+  const upcoming=all.filter(t=>t.done||new Date(t.date+"T00:00:00")>=today),groups={};
+  upcoming.forEach(t=>{const key=t.date.slice(0,7);(groups[key]??=[]).push(t)});
+  timeline.innerHTML=Object.keys(groups).sort().map((month,i)=>{
+    const items=groups[month].sort((a,b)=>a.date.localeCompare(b.date));
+    return `<details class="timeline-month" ${i===0?"open":""}><summary>${new Date(month+"-01T00:00:00").toLocaleDateString("en-US",{month:"long",year:"numeric"})}<span>${items.length}</span></summary><div class="timeline-items">${items.map(t=>`<div class="todo-row"><button class="todo-check" onclick="toggleTodo('${t.id}')">${t.done?"✓":""}</button><div><b>${escapeHtml(t.text)}</b><div class="todo-meta">${new Date(t.date+"T00:00:00").toLocaleDateString("en-US",{day:"numeric",month:"short"})}</div></div></div>`).join("")}</div></details>`
+  }).join("")||`<div class="exercise"><p style="color:var(--muted);font-size:12px;margin:0">No upcoming todos.</p></div>`;
+  const overdue=all.filter(t=>!t.done&&new Date(t.date+"T00:00:00")<today);
+  overdueBox.innerHTML=overdue.map(t=>`<div class="exercise overdue"><div class="todo-row"><button class="todo-check" onclick="toggleTodo('${t.id}')">${t.done?"✓":""}</button><div><b>${escapeHtml(t.text)}</b><div class="todo-meta">Overdue · ${new Date(t.date+"T00:00:00").toLocaleDateString("en-US",{day:"numeric",month:"short"})}</div></div></div></div>`).join("")||`<div class="exercise"><p style="color:var(--muted);font-size:12px;margin:0">Nothing overdue.</p></div>`
+}
 
-const defaultGoals=["HTML, CSS & modern JavaScript","React & component architecture","Git & GitHub workflow","TypeScript","REST APIs & authentication","SQL & database fundamentals","Node.js & backend fundamentals","Testing & debugging","Docker basics","Cloud fundamentals (AWS/Azure/GCP)","System design fundamentals","Data structures & algorithms","Communication & technical writing","Personal finance & investing basics"];
-function getGoals(){return readJSON("forgeGoals",[])}
-function goalDone(name){return getGoals().some(g=>g.name===name&&g.done)}
-function toggleGoal(name){const goals=getGoals(),i=goals.findIndex(g=>g.name===name);if(i<0)goals.push({name,done:true});else goals[i].done=!goals[i].done;localStorage.setItem("forgeGoals",JSON.stringify(goals));renderGoals()}
-function addGoal(){const input=document.getElementById("goalText"),name=input?.value.trim();if(!name)return;const goals=getGoals();if(!goals.some(g=>g.name===name))goals.push({name,done:false});localStorage.setItem("forgeGoals",JSON.stringify(goals));input.value="";renderGoals();toast("Skill added ✓")}
-function renderGoals(){const box=document.getElementById("goalList");if(!box)return;const custom=getGoals().filter(g=>!defaultGoals.includes(g.name)).map(g=>g.name),names=[...defaultGoals,...custom];box.innerHTML=names.map(name=>`<div class="goal-row"><button class="goal-check" onclick="toggleGoal('${name.replace(/'/g,"\\'")}')">${goalDone(name)?"✓":""}</button><div><b style="${goalDone(name)?"text-decoration:line-through;opacity:.55":""}">${escapeHtml(name)}</b><div class="todo-meta">${goalDone(name)?"LEARNED":"NOT YET"}</div></div></div>`).join("")}
+function toast(message){const el=document.getElementById("toast");if(!el)return;el.textContent=message;el.style.display="block";clearTimeout(window.__forgeToast);window.__forgeToast=setTimeout(()=>{el.style.display="none"},2200)}
+function urlBase64ToUint8Array(base64String){const padding="=".repeat((4-base64String.length%4)%4),base64=(base64String+padding).replace(/-/g,"+").replace(/_/g,"/"),raw=atob(base64);return Uint8Array.from([...raw].map(c=>c.charCodeAt(0)))}
 
 const VAPID_PUBLIC_KEY = "BJwiYGNhfbLERX7zCAdCfQFlDmfKHF2uOFo2KjJvsIEwRq_c4_DQHA_4MmBGexqbrzgznWY6eTrzp_Xeti1ZGo0";
 render();
