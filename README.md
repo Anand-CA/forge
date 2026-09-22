@@ -1,71 +1,148 @@
-# FORGE
+# 🔥 FORGE — Workout & Fitness Tracker
 
-FORGE is a mobile-first workout and fitness tracking PWA for managing workouts, progress, nutrition, and hydration reminders.
+> **Train hard. Track everything. Build yourself. 💪**
 
-## Features
+**FORGE** is a mobile-first fitness tracking PWA built to keep your workouts, progress, nutrition, and hydration in one place.  
+Fast, lightweight, installable, and designed for everyday use. ⚡📱
 
-- Workout plans and exercise tracking
-- Exercise weight and progress tracking
-- Workout history and progress data
-- Nutrition and meal tracking
-- Hydration reminders
-- Real push notifications for water reminders
-- Installable Progressive Web App (PWA)
-- Mobile-focused dark interface
-- Local data persistence
-- Lightweight HTML, CSS, and JavaScript frontend
+---
 
-## Push Notifications
+## 🏋️ Features
 
-FORGE uses Web Push with Netlify Functions and Web Push VAPID authentication.
+| | Feature | |
+|---|---|---|
+| 🏋️ | **Workout Tracking** | Follow your weekly workout plan and track exercises |
+| 📈 | **Progress Tracking** | Record weights and monitor your training progress |
+| 🗓️ | **Workout History** | Keep a history of completed training sessions |
+| 🍽️ | **Nutrition** | Track meals and daily nutrition |
+| 💧 | **Hydration** | Stay on top of your water intake |
+| 🔔 | **Push Notifications** | Receive water reminders every 2 hours |
+| 📱 | **Installable PWA** | Install FORGE directly on your phone |
+| 🌙 | **Dark Interface** | Mobile-focused dark UI |
+| 💾 | **Local Persistence** | Keep app data available between sessions |
+| ⚡ | **Lightweight** | Plain HTML, CSS & JavaScript with minimal overhead |
 
-- Browser push subscriptions are registered through the service worker.
-- Push subscriptions are stored using Netlify Blobs.
-- A scheduled Netlify Function sends water reminders every 2 hours.
-- VAPID private keys are kept in Netlify environment variables.
+---
 
-## Tech Stack
+## 💧 Smart Hydration Reminders
 
-- HTML
-- CSS
-- JavaScript
-- Service Worker / Web Push API
-- Netlify Functions
-- Netlify Blobs
-- GitHub
-- Netlify
+FORGE supports **real browser push notifications** so you can get hydration reminders even when the app isn't open.
 
-## Deployment
+### 🔔 How it works
 
-The project is connected to Netlify for automatic deployments from the main branch.
+```
+📱 FORGE
+    ↓
+🔔 Browser Push Subscription
+    ↓
+☁️ Netlify Function
+    ↓
+💾 Netlify Blobs
+    ↓
+⏰ Scheduled Function — Every 2 Hours
+    ↓
+💧 Push Notification
+```
 
-1. Push changes to GitHub.
-2. Netlify automatically deploys the latest version.
-3. Open the deployed site on a supported browser.
-4. Install FORGE as a PWA if desired.
-5. Enable notification permission to receive hydration reminders.
+- 🔐 VAPID authentication secures Web Push.
+- 💾 Push subscriptions are stored using **Netlify Blobs**.
+- ⏰ A scheduled **Netlify Function** sends water reminders every 2 hours.
+- 🔑 VAPID private keys stay in **Netlify environment variables**.
+- 📴 Notifications can arrive while the app is closed, subject to browser/OS support and power-management behavior.
 
-## Project Structure
+---
 
-- index.html
-- manifest.json
-- icon.svg
-- sw.js
-- package.json
-- netlify.toml
-- netlify/functions/subscribe.js
-- netlify/functions/send-water-reminder.js
+## 🧰 Tech Stack
 
-## Workout Schedule
+### 🎨 Frontend
+- 🧱 HTML
+- 🎨 CSS
+- ⚡ JavaScript
+- 🧑‍💻 Service Worker
+- 🔔 Web Push API
+- 📲 PWA / Web App Manifest
 
-- Monday — Chest + Triceps
-- Tuesday — Back + Biceps
-- Wednesday — Rest
-- Thursday — Chest + Shoulders
-- Friday — Biceps + Triceps
-- Saturday — Legs
-- Sunday — Rest
+### ☁️ Backend & Infrastructure
+- ▲ **Netlify**
+- ⚙️ **Netlify Functions**
+- 💾 **Netlify Blobs**
+- 🔔 **web-push**
+- 🐙 **GitHub**
 
-## License
+---
 
-This project is for personal use.
+## 🚀 Deployment
+
+FORGE is connected to Netlify for automatic deployments from the `main` branch.
+
+```
+👨‍💻 GitHub
+   ↓
+📦 Push to main
+   ↓
+▲ Netlify
+   ↓
+🚀 Automatic Deployment
+   ↓
+📱 FORGE PWA
+```
+
+### 📲 Install FORGE
+
+1. 🌐 Open the deployed FORGE website.
+2. 📱 Use your browser's **Add to Home Screen / Install App** option.
+3. 🔔 Allow notifications when prompted.
+4. 💧 Enable the hydration reminder.
+5. 🏋️ Start training.
+
+---
+
+## 📂 Project Structure
+
+```
+forge/
+├── 🌐 index.html
+├── 📋 manifest.json
+├── 🎨 icon.svg
+├── ⚙️ sw.js
+├── 📦 package.json
+├── 🚀 netlify.toml
+└── ☁️ netlify/
+    └── functions/
+        ├── 🔔 subscribe.js
+        └── 💧 send-water-reminder.js
+```
+
+---
+
+## 🗓️ Weekly Workout Split
+
+| Day | Workout |
+|---|---|
+| 🔴 **Monday** | 🟥 Chest + Triceps |
+| 🔵 **Tuesday** | 🟦 Back + Biceps |
+| 🟢 **Wednesday** | 😴 Rest |
+| 🟡 **Thursday** | 🟨 Chest + Shoulders |
+| 🟣 **Friday** | 🟪 Biceps + Triceps |
+| 🟠 **Saturday** | 🟧 Legs |
+| ⚫ **Sunday** | 😴 Rest |
+
+---
+
+## 🎯 FORGE Philosophy
+
+> **Consistency beats motivation. 🔥**
+
+Track the work.  
+Show up.  
+Add weight.  
+Recover.  
+Repeat. ♻️
+
+**BUILD. TRAIN. FORGE. 💪**
+
+---
+
+## 📄 License
+
+🔒 This project is for personal use.
