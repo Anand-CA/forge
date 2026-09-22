@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b0b0b">
+<title>FORGE — Mobile Workout App</title>
+<style>
+:root{--bg:#0b0b0b;--surface:#141414;--surface2:#1b1b1b;--text:#f4f2ed;--muted:#898780;--line:#292929;--accent:#d9ff4a}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:#050505;color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+body{min-height:100dvh}
+button,input{font:inherit}
+button{color:inherit}
+.app{width:100%;max-width:480px;min-height:100dvh;margin:auto;background:var(--bg);position:relative;overflow:hidden}
+.topbar{height:76px;padding:env(safe-area-inset-top) 18px 0;display:flex;align-items:flex-end;padding-bottom:14px;justify-content:space-between;border-bottom:1px solid var(--line);position:sticky;top:0;background:#0b0b0bee;backdrop-filter:blur(16px);z-index:10}
+.logo{font-size:18px;font-weight:950;letter-spacing:-.06em}.logo span{color:var(--accent)}
+.iconbtn{width:38px;height:38px;border:1px solid var(--line);border-radius:50%;background:var(--surface);display:grid;place-items:center}
+main{padding:24px 17px calc(105px + env(safe-area-inset-bottom))}
+.eyebrow{font-size:10px;font-weight:800;letter-spacing:.16em;color:var(--muted);text-transform:uppercase}
+h1{font-size:43px;line-height:.9;letter-spacing:-.07em;margin:9px 0 28px}
+h2{font-size:24px;letter-spacing:-.05em;margin:0}
+.day-scroll{display:flex;gap:8px;overflow-x:auto;padding:2px 1px 10px;scrollbar-width:none}.day-scroll::-webkit-scrollbar{display:none}
+.day{min-width:76px;height:84px;border:1px solid var(--line);border-radius:16px;background:var(--surface);padding:11px;text-align:left;flex:0 0 auto}
+.day.active{background:var(--accent);color:#0b0b0b;border-color:var(--accent)}
+.day small{display:block;font-size:10px;font-weight:800;opacity:.6;margin-bottom:15px}.day b{font-size:14px}.day em{display:block;font-size:9px;font-style:normal;opacity:.58;margin-top:3px;white-space:nowrap}
+.section{margin-top:27px}.section-head{display:flex;align-items:end;justify-content:space-between;margin-bottom:11px}.section-head span{font-size:11px;color:var(--muted)}
+.exercise{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:15px;margin-bottom:9px}
+.ex-top{display:flex;justify-content:space-between;gap:12px}.num{font-size:10px;color:var(--muted);margin-bottom:4px}.muscle{font-size:9px;color:var(--accent);font-weight:800;letter-spacing:.13em;text-transform:uppercase}.name{font-size:17px;font-weight:800;letter-spacing:-.035em;margin-top:3px}
+.lastbox{text-align:right;font-size:10px;color:var(--muted)}.lastbox strong{display:block;font-size:16px;color:var(--text)}
+.target{margin-top:13px;border-top:1px solid var(--line);padding-top:12px}.target-row{display:flex;justify-content:space-between;align-items:center}.target span{font-size:11px;color:var(--muted)}.target b{font-size:13px}.inline-sets{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:10px}.setbox{background:#0d0d0d;border:1px solid var(--line);border-radius:11px;padding:8px}.setbox small{display:block;color:var(--muted);font-size:8px;text-transform:uppercase;margin-bottom:3px}.setbox input{width:100%;background:none;border:0;outline:0;color:var(--text);font-size:14px;font-weight:800;padding:1px 0}.save-inline{width:100%;border:0;background:var(--accent);color:#080808;border-radius:11px;padding:10px;margin-top:7px;font-size:10px;font-weight:950}
+.rest{padding:48px 0}.rest .big{font-size:38px;line-height:.95;letter-spacing:-.06em;font-weight:900;margin:10px 0 15px}.rest p{color:var(--muted);line-height:1.5;font-size:13px}
+.bottom{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;padding:10px 12px calc(10px + env(safe-area-inset-bottom));background:linear-gradient(transparent,#0b0b0b 22%);z-index:12}
+.nav{height:63px;background:#151515;border:1px solid #292929;border-radius:22px;display:grid;grid-template-columns:repeat(4,1fr);padding:5px}
+.nav button{border:0;background:transparent;color:#77746d;border-radius:17px;font-size:10px;font-weight:700}.nav button.active{background:#222;color:#fff}.nav i{display:block;font-style:normal;font-size:18px;margin-bottom:3px}
+.sheet-bg{position:fixed;inset:0;background:#000a;display:none;align-items:end;z-index:30}.sheet-bg.open{display:flex}
+.sheet{width:100%;max-width:480px;margin:auto;background:#151515;border:1px solid #303030;border-radius:25px 25px 0 0;padding:20px 17px calc(25px + env(safe-area-inset-bottom));box-shadow:0 -20px 60px #000b}
+.grab{width:38px;height:4px;background:#4a4a4a;border-radius:4px;margin:0 auto 20px}.sheet-head{display:flex;justify-content:space-between;align-items:start}.sheet h3{font-size:26px;letter-spacing:-.05em;margin:0}.close{border:1px solid var(--line);background:var(--surface);border-radius:50%;width:35px;height:35px}
+.inputs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:20px}.inputs label{font-size:9px;color:var(--muted);text-transform:uppercase}.inputs input{width:100%;margin-top:5px;border:1px solid var(--line);background:#0d0d0d;color:#fff;border-radius:12px;padding:13px;font-weight:800}
+.save{width:100%;border:0;background:var(--accent);color:#080808;padding:15px;border-radius:14px;font-weight:950;margin-top:15px}
+@media(min-width:600px){body{padding:25px 0}.app{min-height:calc(100dvh - 50px);border:1px solid #292929;border-radius:32px;box-shadow:0 30px 100px #000;overflow:hidden}}
+</style>
+</head>
+<body>
+<div class="app">
+<header class="topbar"><div class="logo">FORGE<span>●</span></div><button class="iconbtn" onclick="toast('Profile coming soon')">A</button></header>
+<main id="main"></main>
+<div class="bottom"><nav class="nav"><button class="active" onclick="nav(this,'home')"><i>⌂</i>Today</button><button onclick="nav(this,'progress')"><i>↗</i>Progress</button><button onclick="nav(this,'history')"><i>◷</i>History</button><button onclick="nav(this,'diet')"><i>⌁</i>Diet</button></nav></div>
+</div>
+<div class="sheet-bg" id="sheetBg"><div class="sheet">
+<div class="grab"></div><div class="sheet-head"><div><div class="eyebrow" id="sheetMuscle"></div><h3 id="sheetName"></h3></div><button class="close" onclick="closeSheet()">×</button></div>
+<div class="eyebrow" style="margin-top:22px">SET WEIGHTS · KG</div>
+<div class="inputs"><label>Set 1<input id="i1" type="number" step=".5"></label><label>Set 2<input id="i2" type="number" step=".5"></label><label>Set 3<input id="i3" type="number" step=".5"></label></div>
+<button class="save" onclick="saveExercise()">SAVE SESSION</button>
+</div></div>
+<div id="toast" style="position:fixed;left:50%;bottom:105px;transform:translateX(-50%);background:#fff;color:#111;padding:11px 15px;border-radius:12px;font-size:12px;font-weight:800;display:none;z-index:50"></div>
+<script>
+const plan={Monday:["Chest","Triceps"],Tuesday:["Back","Biceps"],Wednesday:["Rest"],Thursday:["Chest","Shoulders"],Friday:["Biceps","Triceps"],Saturday:["Legs"],Sunday:["Rest"]};
+const exercises={Chest:["Barbell Bench Press","Incline Dumbbell Press","Cable Fly"],Triceps:["Rope Pushdown","Overhead Cable Extension","Cable Skull Crusher"],Back:["Lat Pulldown","Seated Cable Row","Chest-Supported Row"],Biceps:["Barbell Curl","Incline Dumbbell Curl","Hammer Curl"],Shoulders:["Cable Lateral Raise","Machine Shoulder Press","Rear Delt Fly"],Legs:["Leg Press","Leg Extension","Seated Leg Curl"]};
+const defaults={"Barbell Bench Press":40,"Incline Dumbbell Press":12.5,"Cable Fly":15,"Rope Pushdown":20,"Overhead Cable Extension":15,"Cable Skull Crusher":15,"Lat Pulldown":45,"Seated Cable Row":40,"Chest-Supported Row":20,"Barbell Curl":20,"Incline Dumbbell Curl":10,"Hammer Curl":12.5,"Cable Lateral Raise":7.5,"Machine Shoulder Press":30,"Rear Delt Fly":20,"Leg Press":100,"Leg Extension":40,"Seated Leg Curl":35};
+let saved=JSON.parse(localStorage.getItem("forgeMobile")||"{}"), selected=new Intl.DateTimeFormat("en-US",{weekday:"long"}).format(new Date()), current="";
+const days=["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+function w(e){return saved[e]??defaults[e]??10}
+function render(){
+let d=new Date();let date=d.toLocaleDateString("en-US",{weekday:"long",day:"numeric",month:"short"});
+main.innerHTML=`<div class="eyebrow">${date} · TRAINING LOG</div><h1>What are you<br>training today?</h1>
+<div class="day-scroll">${days.map(x=>`<button class="day ${x===selected?"active":""}" onclick="selectDay('${x}')"><small>${x.slice(0,3).toUpperCase()}</small><b>${x}</b><em>${plan[x].join(" + ")}</em></button>`).join("")}</div>
+<div id="workoutArea"></div>`;
+renderWorkout();
+}
+function selectDay(d){selected=d;render()}
+function renderWorkout(){
+let groups=plan[selected], area=document.getElementById("workoutArea");
+if(groups[0]==="Rest"){area.innerHTML=`<section class="section rest"><div class="eyebrow">RECOVERY DAY</div><div class="big">Rest today.<br>Come back stronger.</div><p>No workout is scheduled for ${selected}. Recovery is part of progressive overload.</p></section>`;return}
+let html=`<section class="section"><div class="section-head"><h2>${groups.join(" + ")}</h2><span>${groups.reduce((a,m)=>a+exercises[m].length,0)} exercises</span></div>`;
+let n=0;groups.forEach(m=>exercises[m].forEach(e=>{n++;let last=w(e),target=last+2.5;html+=`<article class="exercise"><div class="ex-top"><div><div class="num">${String(n).padStart(2,"0")}</div><div class="muscle">${m}</div><div class="name">${e}</div></div><div class="lastbox">LAST<strong>${last} kg</strong></div></div><div class="target"><div class="target-row"><span>Next target</span><b>${target} kg</b></div><div class="inline-sets"><label class="setbox"><small>Set 1</small><input id="set_${n}_1" type="number" step=".5" value="${last}"></label><label class="setbox"><small>Set 2</small><input id="set_${n}_2" type="number" step=".5" value="${last}"></label><label class="setbox"><small>Set 3</small><input id="set_${n}_3" type="number" step=".5" value="${last}"></label></div><button class="save-inline" onclick="saveInline('${e}',${n})">SAVE EXERCISE</button></div></article>`}));
+area.innerHTML=html+"</section>";
+}
+function openSheet(e,m){current=e;sheetName.textContent=e;sheetMuscle.textContent=m;let x=w(e);i1.value=i2.value=i3.value=x;sheetBg.classList.add("open")}
+function closeSheet(){sheetBg.classList.remove("open")}
+function saveInline(e,n){
+const vals=[1,2,3].map(s=>+document.getElementById(`set_${n}_${s}`).value).filter(Boolean);
+if(vals.length){saved[e]=Math.max(...vals);localStorage.setItem("forgeMobile",JSON.stringify(saved));render();toast("Saved · "+saved[e]+" kg")}
+}
+function saveExercise(){let vals=[+i1.value,+i2.value,+i3.value].filter(Boolean);if(vals.length){saved[current]=Math.max(...vals);localStorage.setItem("forgeMobile",JSON.stringify(saved));closeSheet();render();toast("Workout saved · "+saved[current]+" kg")}}
+function nav(btn,page){
+document.querySelectorAll(".nav button").forEach(x=>x.classList.remove("active"));
+btn.classList.add("active");
+if(page==="home"){render();return}
+if(page==="progress"){
+main.innerHTML=`<div class="eyebrow">YOUR PROFILE</div><h1>Train with<br>context.</h1>
+<div class="exercise"><div class="eyebrow">BODY</div><div class="name" style="margin-top:9px">177 cm · 75 kg</div><p style="color:var(--muted);font-size:12px;line-height:1.5">Your current body stats are shown here so your training and nutrition targets have context.</p></div>
+<div class="exercise"><div class="eyebrow">LIFESTYLE</div><div class="name" style="margin-top:9px">Work from home</div><p style="color:var(--muted);font-size:12px;line-height:1.5">Low daily movement can be easy to miss with WFH. Use the diet section to keep meals consistent.</p></div>
+<div class="exercise"><div class="eyebrow">PROGRESSIVE OVERLOAD</div><div class="name" style="margin-top:9px">Beat your previous number.</div><p style="color:var(--muted);font-size:12px;line-height:1.5">Every saved exercise remembers your recent best weight and suggests the next target.</p></div>`; return;
+}
+if(page==="history"){
+main.innerHTML=`<div class="eyebrow">SESSION HISTORY</div><h1>Your work,<br>logged.</h1>
+<div class="exercise"><div class="name">Workout history</div><p style="color:var(--muted);font-size:12px">Detailed session history will be added next.</p></div>`; return;
+}
+if(page==="diet"){
+main.innerHTML=`<div class="eyebrow">NUTRITION / DAILY ROUTINE</div><h1>Eat for<br>the work.</h1>
+<div class="exercise">
+<div class="ex-top"><div><div class="muscle">PROFILE</div><div class="name">177 cm · 75 kg</div></div><div class="lastbox">GOAL<strong>LEAN BULK</strong></div></div>
+<div class="target"><div class="target-row"><span>Meal consistency</span><b>0 / 5 today</b></div></div>
+</div>
+<div class="section-head" style="margin-top:22px"><h2>Today's reminders</h2><span>tap to complete</span></div>
+${[
+["08:30","Breakfast","Oats + milk + peanut butter + banana"],
+["13:30","Lunch","Rice + soya + eggs"],
+["17:30","Snack","Bread + peanut butter / protein"],
+["20:30","Post-workout","Protein + creatine + fluids"],
+["22:30","Dinner","Rice + soya + eggs"]
+].map((x,i)=>`<div class="exercise" id="meal${i}" onclick="toggleMeal(${i})" style="cursor:pointer">
+<div class="ex-top"><div><div class="num">${x[0]}</div><div class="muscle">MEAL ${i+1}</div><div class="name">${x[1]}</div></div><div class="lastbox">○</div></div>
+<div style="font-size:11px;color:var(--muted);margin-top:9px">${x[2]}</div></div>`).join("")}
+<div class="exercise"><div class="eyebrow">HYDRATION</div><div class="name" style="margin-top:9px">Water reminder</div><p style="color:var(--muted);font-size:12px">Keep water visible during WFH and around training.</p><button class="save-inline" onclick="toast('Hydration reminder set')">SET REMINDER</button></div>`; return;
+}
+}
+function toggleMeal(i){
+const el=document.getElementById("meal"+i);
+const done=el.dataset.done==="1";
+el.dataset.done=done?"0":"1";
+el.style.opacity=done?"1":".55";
+el.querySelector(".lastbox").innerHTML=done?"○":"✓";
+if(!done)toast("Meal completed ✓");
+}
+function toast(t){let x=document.getElementById("toast");x.textContent=t;x.style.display="block";setTimeout(()=>x.style.display="none",1700)}
+render();
+</script>
+</body>
+</html>
