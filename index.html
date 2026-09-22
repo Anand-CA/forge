@@ -140,10 +140,6 @@ main.innerHTML=`<div class="eyebrow">PLANNING / MONTHLY TIMELINE</div><h1>Get th
 <div class="exercise"><div class="eyebrow">ADD TODO</div><input id="todoText" class="money-input" style="font-size:15px" placeholder="What needs to be done?"><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px"><input id="todoDate" class="select-input" type="date"><button class="save-inline" style="margin:0" onclick="addTodo()">ADD TODO</button></div><p style="color:var(--muted);font-size:11px;margin-bottom:0">No date = today. Select a date to receive a push reminder on that date.</p></div>
 <div class="section-head"><h2>Timeline</h2><span>your tasks</span></div><div id="todoTimeline"></div><div class="section-head" style="margin-top:22px"><h2>Overdue</h2><span>needs attention</span></div><div id="overdueTodos"></div>`; renderTodos(); return;
 }
-if(page==="goals"){
-main.innerHTML=`<div class="eyebrow">GOALS / SKILLS</div><h1>Build your<br>skill stack.</h1>
-<div class="exercise"><div class="eyebrow">24-YEAR-OLD SKILL CHECKLIST</div><p style="color:var(--muted);font-size:12px;line-height:1.5">A practical sample checklist. Mark a skill as learned when you can genuinely use it.</p><div id="goalList"></div></div><div class="exercise"><div class="eyebrow">ADD YOUR OWN</div><input id="goalText" class="money-input" style="font-size:15px" placeholder="e.g. System design"><button class="save-inline" onclick="addGoal()">ADD SKILL</button></div>`; renderGoals(); return;
-}
 }
 function readJSON(key,fallback){try{const raw=localStorage.getItem(key);return raw?JSON.parse(raw):fallback}catch(_){return fallback}}
 function escapeHtml(value){const d=document.createElement("div");d.textContent=String(value??"");return d.innerHTML}
@@ -159,15 +155,13 @@ async function toggleWaterPush(){if(isWaterEnabled())stopWaterPush();else await 
 async function stopWaterPush(){try{const registration=await navigator.serviceWorker.ready;const subscription=await registration.pushManager.getSubscription();if(subscription){const response=await fetch("/.netlify/functions/unsubscribe",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({endpoint:subscription.endpoint})});if(!response.ok)throw new Error("Unsubscribe failed");await subscription.unsubscribe()}localStorage.setItem("forgeWaterEnabled","0");clearInterval(waterTimer);updateWaterTimer();const button=document.getElementById("waterPushButton");if(button)button.textContent="ENABLE WATER NOTIFICATIONS";toast("Water reminders stopped")}catch(err){console.error(err);toast("Could not stop reminders")}}
 async function enableWaterPush(silent=false){if(!("serviceWorker" in navigator)||!("PushManager" in window)||!("Notification" in window)){if(!silent)toast("Push notifications are not supported here");return}try{const permission=await Notification.requestPermission();if(permission!=="granted"){if(!silent)toast("Notification permission is required");return}const registration=await navigator.serviceWorker.ready;const existing=await registration.pushManager.getSubscription();const subscription=existing||await registration.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlBase64ToUint8Array(VAPID_PUBLIC_KEY)});const response=await fetch("/.netlify/functions/subscribe",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({...subscription.toJSON(),interval:getWaterInterval()})});if(!response.ok)throw new Error("Subscription failed");localStorage.setItem("forgeWaterEnabled","1");updateWaterTimer();const button=document.getElementById("waterPushButton");if(button)button.textContent="STOP WATER NOTIFICATIONS";if(!silent)toast("Water notifications enabled ✓")}catch(err){console.error(err);if(!silent)toast("Could not enable notifications")}}
 
-function saveInvestment(value){localStorage.setItem("forgeInvestment",value);renderInvestmentInsights()}
-function renderInvestmentInsights(){const box=document.getElementById("investmentInsights");if(!box)return;const amount=Number(localStorage.getItem("forgeInvestment")||0);const insights=amount>0?[["Emergency reserve","Consider keeping a cash buffer for near-term needs and unexpected expenses before investing the full amount."],["Diversification","Research spreading money across diversified assets rather than concentrating everything in one stock, sector, or asset."],["Time horizon","Money needed soon generally calls for different risk and liquidity considerations than long-term money."],["Costs & tax","Compare expense ratios, platform/brokerage fees, liquidity, and applicable taxes before choosing a product."],["Research options","Broad diversified index funds/ETFs are one option to research alongside other regulated investment products. Match the choice to your goals and risk tolerance."]]:[["Start with your number","Enter the amount you can actually invest so FORGE can show planning guidance."],["Define the goal","Decide whether the money is for an emergency buffer, a near-term purchase, or long-term wealth building."],["Check risk & liquidity","Research diversification, fees, liquidity, and downside risk before choosing an investment."]];box.innerHTML=insights.map((x,i)=>`<div class="exercise"><div class="eyebrow">INSIGHT ${i+1}</div><div class="name" style="margin-top:7px">${x[0]}</div><p style="color:var(--muted);font-size:12px;line-height:1.5;margin-bottom:0">${x[1]}</p></div>`).join("")}
-
 function getTodos(){return readJSON("forgeTodos",[])}
 function localDateString(date=new Date()){const y=date.getFullYear(),m=String(date.getMonth()+1).padStart(2,"0"),d=String(date.getDate()).padStart(2,"0");return `${y}-${m}-${d}`}
 async function addTodo(){
   const input=document.getElementById("todoText"),dateInput=document.getElementById("todoDate");
   const text=input?.value.trim();
-  const hadSelectedDate=!!dateInput?.value;\n  const selectedDate=dateInput?.value||localDateString();
+  const hadSelectedDate=!!dateInput?.value;
+  const selectedDate=dateInput?.value||localDateString();
   if(!text){toast("Enter a task");return}
   const todos=getTodos();
   const todo={id:"t"+Date.now(),date:selectedDate,text,done:false};
@@ -177,8 +171,7 @@ async function addTodo(){
   if(dateInput)dateInput.value="";
   renderTodos();
   toast("Todo added ✓");
-  if(dateInput?.value) await scheduleTodoPush(todo);
-  else if(selectedDate!==localDateString()) await scheduleTodoPush(todo);
+  if(hadSelectedDate) await scheduleTodoPush(todo);
 }
 async function scheduleTodoPush(todo){
   try{
