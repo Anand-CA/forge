@@ -99,7 +99,7 @@ area.innerHTML=html+"</section>";
 }
 function openSheet(e,m){current=e;sheetName.textContent=e;sheetMuscle.textContent=m;let sets=getSets(e);i1.value=sets[0];i2.value=sets[1];i3.value=sets[2];sheetBg.classList.add("open")}
 function closeSheet(){sheetBg.classList.remove("open")}
-async async function saveInline(e,n){
+async function saveInline(e,n){
   const vals=[1,2,3]
     .map(s=>Number(document.getElementById(`set_${n}_${s}`).value))
     .filter(v=>Number.isFinite(v)&&v>=0);
