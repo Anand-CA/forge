@@ -193,7 +193,7 @@ async function scheduleTodoPush(todo){
     const response=await fetch("/.netlify/functions/subscribe",{
       method:"POST",
       headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({...subscription.toJSON(),todo:{id:todo.id,text:todo.text,date:todo.date}})
+      body:JSON.stringify({...subscription.toJSON(),todo:{id:todo.id,text:todo.text,date:todo.date,dueAt:new Date(todo.date+"T09:00:00").getTime()}})
     });
     if(!response.ok)throw new Error("Todo notification subscription failed");
     toast("Todo reminder scheduled ✓");
