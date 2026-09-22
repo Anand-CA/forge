@@ -16,10 +16,24 @@ export default async (req) => {
     }
 
     const key = crypto.createHash("sha256").update(subscription.endpoint).digest("hex");
+    const existing = await store.get(key, { type: "json" });
+    const todo = body?.todo && body.todo.id && body.todo.text && body.todo.dueAt
+      ? { id: String(body.todo.id), text: String(body.todo.text).slice(0, 300), date: String(body.todo.date || ""), dueAt: Number(body.todo.dueAt) }
+      : null;
+
+    const todoReminders = Array.isArray(existing?.todoReminders) ? existing.todoReminders.filter(t => t && t.id) : [];
+    if (todo) {
+      const withoutDuplicate = todoReminders.filter(t => t.id !== todo.id);
+      withoutDuplicate.push(todo);
+      todoReminders.splice(0, todoReminders.length, ...withoutDuplicate);
+    }
+
     await store.setJSON(key, {
+      ...(existing || {}),
       subscription,
-      interval,
-      nextDueAt: Date.now() + interval * 60 * 60 * 1000
+      interval: existing?.interval ?? interval,
+      nextDueAt: existing?.nextDueAt ?? (Date.now() + interval * 60 * 60 * 1000),
+      todoReminders
     });
 
     return Response.json({ ok: true });
