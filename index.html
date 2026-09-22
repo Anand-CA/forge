@@ -62,7 +62,14 @@ const exercises={Chest:["Barbell Bench Press","Incline Dumbbell Press","Cable Fl
 const defaults={"Barbell Bench Press":40,"Incline Dumbbell Press":12.5,"Cable Fly":15,"Rope Pushdown":20,"Overhead Cable Extension":15,"Cable Skull Crusher":15,"Lat Pulldown":45,"Seated Cable Row":40,"Chest-Supported Row":20,"Barbell Curl":20,"Incline Dumbbell Curl":10,"Hammer Curl":12.5,"Cable Lateral Raise":7.5,"Machine Shoulder Press":30,"Rear Delt Fly":20,"Leg Press":100,"Leg Extension":40,"Seated Leg Curl":35};
 let saved=JSON.parse(localStorage.getItem("forgeMobile")||"{}"), selected=new Intl.DateTimeFormat("en-US",{weekday:"long"}).format(new Date()), current="";
 const days=["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
-function w(e){return saved[e]??defaults[e]??10}
+function getSets(e){
+  const value=saved[e];
+  if(Array.isArray(value)) return [value[0]??defaults[e]??10,value[1]??defaults[e]??10,value[2]??defaults[e]??10];
+  const legacy=typeof value==="number"?value:(defaults[e]??10);
+  return [legacy,legacy,legacy];
+}
+function w(e){return Math.max(...getSets(e))}
+function persist(){localStorage.setItem("forgeMobile",JSON.stringify(saved))}
 function render(){
 let d=new Date();let date=d.toLocaleDateString("en-US",{weekday:"long",day:"numeric",month:"short"});
 main.innerHTML=`<div class="eyebrow">${date} · TRAINING LOG</div><h1>What are you<br>training today?</h1>
@@ -75,16 +82,19 @@ function renderWorkout(){
 let groups=plan[selected], area=document.getElementById("workoutArea");
 if(groups[0]==="Rest"){area.innerHTML=`<section class="section rest"><div class="eyebrow">RECOVERY DAY</div><div class="big">Rest today.<br>Come back stronger.</div><p>No workout is scheduled for ${selected}. Recovery is part of progressive overload.</p></section>`;return}
 let html=`<section class="section"><div class="section-head"><h2>${groups.join(" + ")}</h2><span>${groups.reduce((a,m)=>a+exercises[m].length,0)} exercises</span></div>`;
-let n=0;groups.forEach(m=>exercises[m].forEach(e=>{n++;let last=w(e),target=last+2.5;html+=`<article class="exercise"><div class="ex-top"><div><div class="num">${String(n).padStart(2,"0")}</div><div class="muscle">${m}</div><div class="name">${e}</div></div><div class="lastbox">LAST<strong>${last} kg</strong></div></div><div class="target"><div class="target-row"><span>Next target</span><b>${target} kg</b></div><div class="inline-sets"><label class="setbox"><small>Set 1</small><input id="set_${n}_1" type="number" step=".5" value="${last}"></label><label class="setbox"><small>Set 2</small><input id="set_${n}_2" type="number" step=".5" value="${last}"></label><label class="setbox"><small>Set 3</small><input id="set_${n}_3" type="number" step=".5" value="${last}"></label></div><button class="save-inline" onclick="saveInline('${e}',${n})">SAVE EXERCISE</button></div></article>`}));
+let n=0;groups.forEach(m=>exercises[m].forEach(e=>{n++;let sets=getSets(e),last=Math.max(...sets),target=last+2.5;html+=`<article class="exercise"><div class="ex-top"><div><div class="num">${String(n).padStart(2,"0")}</div><div class="muscle">${m}</div><div class="name">${e}</div></div><div class="lastbox">BEST<strong>${last} kg</strong></div></div><div class="target"><div class="target-row"><span>Next target</span><b>${target} kg</b></div><div class="inline-sets"><label class="setbox"><small>Set 1</small><input id="set_${n}_1" type="number" step=".5" value="${sets[0]}"></label><label class="setbox"><small>Set 2</small><input id="set_${n}_2" type="number" step=".5" value="${sets[1]}"></label><label class="setbox"><small>Set 3</small><input id="set_${n}_3" type="number" step=".5" value="${sets[2]}"></label></div><button class="save-inline" onclick="saveInline('${e}',${n})">SAVE EXERCISE</button></div></article>`}));
 area.innerHTML=html+"</section>";
 }
-function openSheet(e,m){current=e;sheetName.textContent=e;sheetMuscle.textContent=m;let x=w(e);i1.value=i2.value=i3.value=x;sheetBg.classList.add("open")}
+function openSheet(e,m){current=e;sheetName.textContent=e;sheetMuscle.textContent=m;let sets=getSets(e);i1.value=sets[0];i2.value=sets[1];i3.value=sets[2];sheetBg.classList.add("open")}
 function closeSheet(){sheetBg.classList.remove("open")}
 function saveInline(e,n){
-const vals=[1,2,3].map(s=>+document.getElementById(`set_${n}_${s}`).value).filter(Boolean);
-if(vals.length){saved[e]=Math.max(...vals);localStorage.setItem("forgeMobile",JSON.stringify(saved));render();toast("Saved · "+saved[e]+" kg")}
+const vals=[1,2,3].map(s=>Number(document.getElementById(\`set_\${n}_\${s}\`).value)).filter(v=>Number.isFinite(v)&&v>=0);
+if(vals.length){saved[e]=[vals[0]??0,vals[1]??0,vals[2]??0];persist();render();toast("Saved · "+saved[e].join(" / ")+" kg")}
 }
-function saveExercise(){let vals=[+i1.value,+i2.value,+i3.value].filter(Boolean);if(vals.length){saved[current]=Math.max(...vals);localStorage.setItem("forgeMobile",JSON.stringify(saved));closeSheet();render();toast("Workout saved · "+saved[current]+" kg")}}
+function saveExercise(){
+const vals=[Number(i1.value),Number(i2.value),Number(i3.value)].map(v=>Number.isFinite(v)&&v>=0?v:null);
+if(vals.some(v=>v!==null)){saved[current]=[vals[0]??0,vals[1]??0,vals[2]??0];persist();closeSheet();render();toast("Workout saved · "+saved[current].join(" / ")+" kg")}
+}
 function nav(btn,page){
 document.querySelectorAll(".nav button").forEach(x=>x.classList.remove("active"));
 btn.classList.add("active");
