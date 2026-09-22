@@ -26,23 +26,48 @@ export default async () => {
       const record = await store.get(blob.key, { type: "json" });
       if (!record?.subscription) continue;
 
-      if (now < Number(record.nextDueAt || 0)) continue;
+      let changed = false;
 
-      await webpush.sendNotification(
-        record.subscription,
-        JSON.stringify({
-          title: "FORGE · Water",
-          body: "💧 Time for some water.",
-          url: "./"
-        })
-      );
+      if (Array.isArray(record.todoReminders) && record.todoReminders.length) {
+        const due = record.todoReminders.filter(todo => Number(todo.dueAt) <= now);
+        const pending = record.todoReminders.filter(todo => Number(todo.dueAt) > now);
 
-      const interval = Math.min(3, Math.max(1, Number(record.interval) || 2));
-      await store.setJSON(blob.key, {
-        ...record,
-        interval,
-        nextDueAt: now + interval * 60 * 60 * 1000
-      });
+        for (const todo of due) {
+          await webpush.sendNotification(
+            record.subscription,
+            JSON.stringify({
+              title: "FORGE · Todo",
+              body: "✓ " + todo.text,
+              url: "./"
+            })
+          );
+        }
+
+        if (due.length) {
+          record.todoReminders = pending;
+          changed = true;
+        }
+      }
+
+      if (Number(record.nextDueAt || 0) && now >= Number(record.nextDueAt)) {
+        await webpush.sendNotification(
+          record.subscription,
+          JSON.stringify({
+            title: "FORGE · Water",
+            body: "💧 Time for some water.",
+            url: "./"
+          })
+        );
+
+        const interval = Math.min(3, Math.max(1, Number(record.interval) || 2));
+        record.interval = interval;
+        record.nextDueAt = now + interval * 60 * 60 * 1000;
+        changed = true;
+      }
+
+      if (changed) {
+        await store.setJSON(blob.key, record);
+      }
     } catch (error) {
       console.error("Push failed for", blob.key, error?.statusCode || error?.message || error);
 
