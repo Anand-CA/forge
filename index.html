@@ -45,8 +45,19 @@ h2{font-size:24px;letter-spacing:-.05em;margin:0}
 </style>
 </head>
 <body>
-<div class="app">
-<header class="topbar"><div class="logo">FORGE<span>●</span></div><button class="iconbtn" onclick="toast('Profile coming soon')">A</button></header>
+<div id="authGate" style="position:fixed;inset:0;background:#050505;color:#f4f2ed;display:flex;align-items:center;justify-content:center;padding:20px;z-index:100">
+<div style="width:100%;max-width:390px;background:#141414;border:1px solid #292929;border-radius:24px;padding:24px">
+<div class="logo" style="font-size:22px">FORGE<span>●</span></div>
+<div class="eyebrow" style="margin-top:30px">YOUR ACCOUNT</div>
+<h1 style="font-size:40px;margin-bottom:14px">Train.<br>Track.<br>Forge.</h1>
+<p id="authMessage" style="color:#898780;font-size:12px;line-height:1.5">Sign in to sync your workouts, todos and settings across devices.</p>
+<input id="authEmail" type="email" autocomplete="email" placeholder="Email" style="width:100%;box-sizing:border-box;margin-top:16px;background:#0d0d0d;color:#fff;border:1px solid #292929;border-radius:12px;padding:14px;outline:none">
+<input id="authPassword" type="password" autocomplete="current-password" placeholder="Password" style="width:100%;box-sizing:border-box;margin-top:8px;background:#0d0d0d;color:#fff;border:1px solid #292929;border-radius:12px;padding:14px;outline:none">
+<button id="authSubmit" onclick="signIn()" style="width:100%;border:0;background:#d9ff4a;color:#080808;padding:15px;border-radius:14px;font-weight:950;margin-top:12px">SIGN IN</button>
+<button id="authToggle" onclick="toggleAuthMode()" style="width:100%;border:1px solid #292929;background:#1b1b1b;color:#fff;padding:13px;border-radius:14px;font-weight:800;margin-top:8px">CREATE ACCOUNT</button>
+</div></div>
+<div class="app" id="forgeApp" style="display:none">
+<header class="topbar"><div class="logo">FORGE<span>●</span></div><button class="iconbtn" onclick="signOut()">↪</button></header>
 <main id="main"></main>
 <div class="bottom"><nav class="nav"><button class="active" onclick="nav(this,'home')"><i>⌂</i>Today</button><button onclick="nav(this,'progress')"><i>↗</i>Progress</button><button onclick="nav(this,'diet')"><i>⌁</i>Diet</button><button onclick="nav(this,'todo')"><i>✓</i>Todo</button></nav></div>
 </div>
@@ -211,8 +222,22 @@ function renderTodos(){
 function toast(message){const el=document.getElementById("toast");if(!el)return;el.textContent=message;el.style.display="block";clearTimeout(window.__forgeToast);window.__forgeToast=setTimeout(()=>{el.style.display="none"},2200)}
 function urlBase64ToUint8Array(base64String){const padding="=".repeat((4-base64String.length%4)%4),base64=(base64String+padding).replace(/-/g,"+").replace(/_/g,"/"),raw=atob(base64);return Uint8Array.from([...raw].map(c=>c.charCodeAt(0)))}
 
+
+const SUPABASE_URL="https://ufbsxvqouogkrkeprlua.supabase.co";
+const SUPABASE_ANON_KEY="sb_publishable_ax2ZjXT1a7I3zJECFfvCEw_C6iekTgP";
+let authMode="signin",authSession=null;
+function supabaseHeaders(token){return {"apikey":SUPABASE_ANON_KEY,"Authorization":"Bearer "+(token||SUPABASE_ANON_KEY),"Content-Type":"application/json"}}
+async function supabaseAuth(path,body){const r=await fetch(SUPABASE_URL+"/auth/v1/"+path,{method:"POST",headers:supabaseHeaders(),body:JSON.stringify(body)});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error_description||d.msg||d.message||"Authentication failed");return d}
+function toggleAuthMode(){authMode=authMode==="signin"?"signup":"signin";document.getElementById("authSubmit").textContent=authMode==="signin"?"SIGN IN":"CREATE ACCOUNT";document.getElementById("authToggle").textContent=authMode==="signin"?"CREATE ACCOUNT":"BACK TO SIGN IN";document.getElementById("authPassword").autocomplete=authMode==="signin"?"current-password":"new-password";document.getElementById("authMessage").textContent=authMode==="signin"?"Sign in to sync your workouts, todos and settings across devices.":"Create your FORGE account. Your data will belong to your account."}
+async function signIn(){const email=document.getElementById("authEmail").value.trim(),password=document.getElementById("authPassword").value;if(!email||!password){setAuthMessage("Enter your email and password.");return}setAuthBusy(true);try{if(authMode==="signup"){const d=await supabaseAuth("signup",{email,password});if(d.access_token){await finishAuth(d)}else{setAuthMessage("Account created. Check your email to confirm it, then sign in.");authMode="signin";document.getElementById("authSubmit").textContent="SIGN IN";document.getElementById("authToggle").textContent="CREATE ACCOUNT"}}else{const d=await supabaseAuth("token?grant_type=password",{email,password});await finishAuth(d)}}catch(e){console.error(e);setAuthMessage(e.message||"Could not authenticate.")}finally{setAuthBusy(false)}}
+async function finishAuth(d){authSession=d;localStorage.setItem("forgeSession",JSON.stringify(d));if(d.user?.id){await fetch(SUPABASE_URL+"/rest/v1/profiles",{method:"POST",headers:{...supabaseHeaders(d.access_token),Prefer:"resolution=merge-duplicates"},body:JSON.stringify({id:d.user.id})}).catch(()=>{})}document.getElementById("authGate").style.display="none";document.getElementById("forgeApp").style.display="block";render()}
+function setAuthMessage(m){const e=document.getElementById("authMessage");if(e)e.textContent=m}
+function setAuthBusy(b){const e=document.getElementById("authSubmit");if(e){e.disabled=b;e.style.opacity=b?".6":"1";e.textContent=b?"PLEASE WAIT":(authMode==="signin"?"SIGN IN":"CREATE ACCOUNT")}}
+function restoreAuth(){try{const s=JSON.parse(localStorage.getItem("forgeSession")||"null");if(s?.access_token){authSession=s;document.getElementById("authGate").style.display="none";document.getElementById("forgeApp").style.display="block";render();return true}}catch(_){}return false}
+function signOut(){localStorage.removeItem("forgeSession");authSession=null;document.getElementById("forgeApp").style.display="none";document.getElementById("authGate").style.display="flex";setAuthMessage("Sign in to sync your workouts, todos and settings across devices.")}
+
 const VAPID_PUBLIC_KEY = "BJwiYGNhfbLERX7zCAdCfQFlDmfKHF2uOFo2KjJvsIEwRq_c4_DQHA_4MmBGexqbrzgznWY6eTrzp_Xeti1ZGo0";
-render();
+restoreAuth();
 </script>
 <script>
 if ("serviceWorker" in navigator) { window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(console.error)); }
