@@ -289,18 +289,6 @@ function toast(message){const el=document.getElementById("toast");if(!el)return;
 function urlBase64ToUint8Array(base64String){const padding="=".repeat((4-base64String.length%4)%4),base64=(base64String+padding).replace(/-/g,"+").replace(/_/g,"/"),raw=atob(base64);return Uint8Array.from([...raw].map(c=>c.charCodeAt(0)))}
 
 
-const SUPABASE_URL="https://ufbsxvqouogkrkeprlua.supabase.co";
-const SUPABASE_ANON_KEY="sb_publishable_ax2ZjXT1a7I3zJECFfvCEw_C6iekTgP";
-let authMode="signin",authSession=null;
-function supabaseHeaders(token){return {"apikey":SUPABASE_ANON_KEY,"Authorization":"Bearer "+(token||SUPABASE_ANON_KEY),"Content-Type":"application/json"}}
-async function supabaseAuth(path,body){const r=await fetch(SUPABASE_URL+"/auth/v1/"+path,{method:"POST",headers:supabaseHeaders(),body:JSON.stringify(body)});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error_description||d.msg||d.message||"Authentication failed");return d}
-function toggleAuthMode(){authMode=authMode==="signin"?"signup":"signin";document.getElementById("authSubmit").textContent=authMode==="signin"?"SIGN IN":"CREATE ACCOUNT";document.getElementById("authToggle").textContent=authMode==="signin"?"CREATE ACCOUNT":"BACK TO SIGN IN";document.getElementById("authPassword").autocomplete=authMode==="signin"?"current-password":"new-password";document.getElementById("authMessage").textContent=authMode==="signin"?"Sign in to sync your workouts, todos and settings across devices.":"Create your FORGE account. Your data will belong to your account."}
-async function signIn(){const email=document.getElementById("authEmail").value.trim(),password=document.getElementById("authPassword").value;if(!email||!password){setAuthMessage("Enter your email and password.");return}setAuthBusy(true);try{if(authMode==="signup"){const d=await supabaseAuth("signup",{email,password});if(d.access_token){await finishAuth(d)}else{setAuthMessage("Account created. Check your email to confirm it, then sign in.");authMode="signin";document.getElementById("authSubmit").textContent="SIGN IN";document.getElementById("authToggle").textContent="CREATE ACCOUNT"}}else{const d=await supabaseAuth("token?grant_type=password",{email,password});await finishAuth(d)}}catch(e){console.error(e);setAuthMessage(e.message||"Could not authenticate.")}finally{setAuthBusy(false)}}
-async function finishAuth(d){authSession=d;localStorage.setItem("forgeSession",JSON.stringify(d));if(d.user?.id){await fetch(SUPABASE_URL+"/rest/v1/profiles",{method:"POST",headers:{...supabaseHeaders(d.access_token),Prefer:"resolution=merge-duplicates"},body:JSON.stringify({id:d.user.id})}).catch(()=>{})}document.getElementById("authGate").style.display="none";document.getElementById("forgeApp").style.display="block";render()}
-function setAuthMessage(m){const e=document.getElementById("authMessage");if(e)e.textContent=m}
-function setAuthBusy(b){const e=document.getElementById("authSubmit");if(e){e.disabled=b;e.style.opacity=b?".6":"1";e.textContent=b?"PLEASE WAIT":(authMode==="signin"?"SIGN IN":"CREATE ACCOUNT")}}
-function restoreAuth(){try{const s=JSON.parse(localStorage.getItem("forgeSession")||"null");if(s?.access_token){authSession=s;document.getElementById("authGate").style.display="none";document.getElementById("forgeApp").style.display="block";render();return true}}catch(_){}return false}
-function signOut(){localStorage.removeItem("forgeSession");authSession=null;document.getElementById("forgeApp").style.display="none";document.getElementById("authGate").style.display="flex";setAuthMessage("Sign in to sync your workouts, todos and settings across devices.")}
 
 restoreAuth();
 </script>
