@@ -14,8 +14,73 @@ async function db(token,path,options={}){const r=await fetch(SUPABASE_URL+'/rest
 
 function AuthGate({onReady}){const [busy,setBusy]=useState(false);const [error,setError]=useState('');const start=async()=>{setBusy(true);setError('');try{const s=await auth();onReady(s)}catch(e){setError(e.message)}finally{setBusy(false)}};return <div className="authGate"><div className="authCard"><div className="logo">FORGE<span>●</span></div><div className="eyebrow authEyebrow">WELCOME TO FORGE</div><h1>Train.<br/>Track.<br/>Forge.</h1><p>Start instantly. No email or password required.</p>{error&&<p className="error">{error}</p>}<button className="save" disabled={busy} onClick={start}>{busy?'STARTING…':'START FORGE'}</button><small>Forge creates a private anonymous account on this device.</small></div></div>}
 
-function ExerciseCard({name,muscle,saved,onSave,onDelete}){const [swiped,setSwiped]=useState(false);const sets=saved?.[name]??[defaults[name]??10,defaults[name]??10,defaults[name]??10];const [values,setValues]=useState(sets);useEffect(()=>setValues(sets),[name,saved]);const changed=values.some((v,i)=>Number(v)!==Number(sets[i]));const best=Math.max(...values.map(Number));return <article className={'exercise swipeCard '+(swiped?'swiped':'')} onTouchStart={e=>{e.currentTarget._x=e.touches[0].clientX}} onTouchEnd={e=>{const dx=e.changedTouches[0].clientX-e.currentTarget._x;if(dx<-50)setSwiped(true);if(dx>50)setSwiped(false)}}><button className="deleteSwipe" onClick={()=>onDelete(name,muscle)}>DELETE</button><div className="exerciseContent"><div className="ex-top"><div><div className="muscle">{muscle}</div><div className="name">{name}</div></div><div className="lastbox">BEST<strong>{best} kg</strong></div></div><div className="target"><div className="target-row"><span>Next target</span><b>{best+2.5} kg</b></div><div className="inline-sets">{values.map((v,i)=><label className="setbox" key={i}><small>Set {i+1}</small><input type="number" step=".5" value={v} onChange={e=>{const x=[...values];x[i]=e.target.value;setValues(x)}}/></label>)}</div>{changed&&<button className="save-inline" onClick={()=>onSave(name,values.map(v=>Number(v)||0))}>SAVE EXERCISE</button>}</div></div></article>}
-function Workout({day,setDay,saved,onSave,onAdd,onDelete,custom}){const groups=plan[day];const all={...baseExercises,...custom};return <><div className="eyebrow">{new Date().toLocaleDateString('en-US',{weekday:'long',day:'numeric',month:'short'})} · TRAINING LOG</div><h1>What are you<br/>training today?</h1><div className="day-scroll">{days.map(d=><button className={'day '+(d===day?'active':'')} onClick={()=>setDay(d)} key={d}><small>{d.slice(0,3).toUpperCase()}</small><b>{d}</b><em>{plan[d].join(' + ')}</em></button>)}</div>{groups[0]==='Rest'?<section className="section rest"><div className="eyebrow">RECOVERY DAY</div><div className="big">Rest today.<br/>Come back stronger.</div></section>:<section className="section"><div className="section-head"><h2>{groups.join(' + ')}</h2><span>{groups.reduce((n,m)=>n+(all[m]?.length||0),0)} exercises</span></div>{groups.flatMap(m=>(all[m]||[]).map(e=><ExerciseCard key={m+e} name={e} muscle={m} saved={saved} onSave={onSave} onDelete={onDelete} />))}</section>}<AddExercise onAdd={onAdd}/></>}
+function ExerciseCard({name,muscle,saved,onSave,onDelete,onEdit}){
+  const [swiped,setSwiped]=useState(false);
+  const [isEditing,setIsEditing]=useState(false);
+  const [editName,setEditName]=useState(name);
+  const [editMuscle,setEditMuscle]=useState(muscle);
+
+  const sets=saved?.[name]??[defaults[name]??10,defaults[name]??10,defaults[name]??10];
+  const [values,setValues]=useState(sets);
+  useEffect(()=>{
+    setValues(sets);
+    setEditName(name);
+    setEditMuscle(muscle);
+  },[name,saved,muscle]);
+
+  const changed=values.some((v,i)=>Number(v)!==Number(sets[i]));
+  const best=Math.max(...values.map(Number));
+
+  const handleEditSubmit=()=>{
+    if(!editName.trim())return;
+    onEdit(name,muscle,editName.trim(),editMuscle);
+    setIsEditing(false);
+    setSwiped(false);
+  };
+
+  if(isEditing){
+    return <article className="exercise">
+      <div className="eyebrow">EDIT EXERCISE</div>
+      <input className="money-input" placeholder="Exercise name" value={editName} onChange={e=>setEditName(e.target.value)}/>
+      <select className="select-input" style={{marginTop:'8px'}} value={editMuscle} onChange={e=>setEditMuscle(e.target.value)}>
+        {Object.keys(baseExercises).map(x=><option key={x} value={x}>{x}</option>)}
+      </select>
+      <div className="edit-actions">
+        <button className="save-inline" onClick={handleEditSubmit}>SAVE CHANGES</button>
+        <button className="save-inline cancel-btn" onClick={()=>{setEditName(name);setEditMuscle(muscle);setIsEditing(false)}}>CANCEL</button>
+      </div>
+    </article>;
+  }
+
+  return <article className={'exercise swipeCard '+(swiped?'swiped':'')} onTouchStart={e=>{e.currentTarget._x=e.touches[0].clientX}} onTouchEnd={e=>{const dx=e.changedTouches[0].clientX-e.currentTarget._x;if(dx<-50)setSwiped(true);if(dx>50)setSwiped(false)}}>
+    <div className="swipeActions">
+      <button className="editSwipe" onClick={()=>{setIsEditing(true);setSwiped(false)}}>EDIT</button>
+      <button className="deleteSwipe" onClick={()=>onDelete(name,muscle)}>DELETE</button>
+    </div>
+    <div className="exerciseContent">
+      <div className="ex-top">
+        <div>
+          <div className="muscle-row">
+            <span className="muscle">{muscle}</span>
+            <button className="edit-chip" title="Edit exercise" onClick={()=>setIsEditing(true)}>✎</button>
+          </div>
+          <div className="name">{name}</div>
+        </div>
+        <div className="lastbox">BEST<strong>{best} kg</strong></div>
+      </div>
+      <div className="target">
+        <div className="target-row"><span>Next target</span><b>{best+2.5} kg</b></div>
+        <div className="inline-sets">{values.map((v,i)=><label className="setbox" key={i}><small>Set {i+1}</small><input type="number" step=".5" value={v} onChange={e=>{const x=[...values];x[i]=e.target.value;setValues(x)}}/></label>)}</div>
+        {changed&&<button className="save-inline" onClick={()=>onSave(name,values.map(v=>Number(v)||0))}>SAVE EXERCISE</button>}
+      </div>
+    </div>
+  </article>;
+}
+
+function Workout({day,setDay,saved,onSave,onAdd,onDelete,onEdit,exercises}){
+  const groups=plan[day];
+  return <><div className="eyebrow">{new Date().toLocaleDateString('en-US',{weekday:'long',day:'numeric',month:'short'})} · TRAINING LOG</div><h1>What are you<br/>training today?</h1><div className="day-scroll">{days.map(d=><button className={'day '+(d===day?'active':'')} onClick={()=>setDay(d)} key={d}><small>{d.slice(0,3).toUpperCase()}</small><b>{d}</b><em>{plan[d].join(' + ')}</em></button>)}</div>{groups[0]==='Rest'?<section className="section rest"><div className="eyebrow">RECOVERY DAY</div><div className="big">Rest today.<br/>Come back stronger.</div></section>:<section className="section"><div className="section-head"><h2>{groups.join(' + ')}</h2><span>{groups.reduce((n,m)=>n+(exercises[m]?.length||0),0)} exercises</span></div>{groups.flatMap(m=>(exercises[m]||[]).map(e=><ExerciseCard key={m+e} name={e} muscle={m} saved={saved} onSave={onSave} onDelete={onDelete} onEdit={onEdit} />))}</section>}<AddExercise onAdd={onAdd}/></>;
+}
 
 function AddExercise({onAdd}){const [open,setOpen]=useState(false);const [name,setName]=useState('');const [muscle,setMuscle]=useState('Chest');const [weight,setWeight]=useState('');if(!open)return <button className="save addBtn" onClick={()=>setOpen(true)}>+ ADD EXERCISE</button>;return <div className="exercise"><div className="eyebrow">NEW EXERCISE</div><input className="money-input" placeholder="Exercise name" value={name} onChange={e=>setName(e.target.value)}/><select className="select-input" value={muscle} onChange={e=>setMuscle(e.target.value)}>{Object.keys(baseExercises).map(x=><option key={x}>{x}</option>)}</select><input className="select-input" type="number" step=".5" placeholder="Starting weight (kg)" value={weight} onChange={e=>setWeight(e.target.value)}/><button className="save" onClick={()=>{if(name.trim())onAdd(name.trim(),muscle,Number(weight)||0);setName('');setOpen(false)}}>ADD TO WORKOUT</button></div>}
 
@@ -83,12 +148,26 @@ function Diet(){const p=read('forgeProfile',{height:'177',weight:'75',goal:'Lean
 
 function Todo({token}){const [todos,setTodos]=useState(read('forgeTodos',[]));const [text,setText]=useState('');const [date,setDate]=useState('');const add=async()=>{if(!text.trim())return;const due=date||new Date().toISOString().slice(0,10);try{const r=await db(token,'todos',{method:'POST',headers:{Prefer:'return=representation'},body:JSON.stringify({user_id:token.user.id,text:text.trim(),due_date:due,done:false})});const t=r?.[0];setTodos(x=>[...x,{id:t?.id||Date.now(),text:text.trim(),date:due,done:false}]);setText('');setDate('')}catch(e){console.error(e);localStorage.removeItem('forgeSession');window.location.reload()}};const toggle=async t=>{const next=!t.done;setTodos(x=>x.map(a=>a.id===t.id?{...a,done:next}:a));try{await db(token,'todos?id=eq.'+encodeURIComponent(t.id),{method:'PATCH',body:JSON.stringify({done:next})})}catch{}};useEffect(()=>localStorage.setItem('forgeTodos',JSON.stringify(todos)),[todos]);return <><div className="eyebrow">PLANNING / MONTHLY TIMELINE</div><h1>Get things<br/>done.</h1><div className="exercise"><div className="eyebrow">ADD TODO</div><input className="money-input" placeholder="What needs to be done?" value={text} onChange={e=>setText(e.target.value)}/><div className="todoAdd"><input className="select-input" type="date" value={date} onChange={e=>setDate(e.target.value)}/><button className="save-inline" onClick={add}>ADD TODO</button></div></div><div className="section-head"><h2>Timeline</h2></div>{todos.sort((a,b)=>a.date.localeCompare(b.date)).map(t=><div className="exercise todoRow" key={t.id}><button className="todo-check" onClick={()=>toggle(t)}>{t.done?'✓':''}</button><div><b className={t.done?'done':''}>{t.text}</b><div className="todo-meta">{t.date}</div></div></div>)}</>}
 
+const loadExercises=()=>{
+  const stored=read('forgeExercises',null);
+  if(stored&&typeof stored==='object'&&Object.keys(stored).length)return stored;
+  const legacy=read('forgeCustomExercises',{});
+  const merged={};
+  for(const m of Object.keys(baseExercises)){
+    merged[m]=Array.from(new Set([...(baseExercises[m]||[]),...(legacy[m]||[])]));
+  }
+  for(const m of Object.keys(legacy)){
+    if(!merged[m])merged[m]=[...legacy[m]];
+  }
+  return merged;
+};
+
 export default function App(){
   const [session,setSession]=useState(()=>{const s=read('forgeSession',null);return s?.access_token?.split('.').length===3?s:null});
   const [page,setPage]=useState('home');
   const [day,setDay]=useState(new Intl.DateTimeFormat('en-US',{weekday:'long'}).format(new Date()));
   const [saved,setSaved]=useState(read('forgeMobile',{}));
-  const [custom,setCustom]=useState(read('forgeCustomExercises',{}));
+  const [exercises,setExercises]=useState(loadExercises);
 
   useEffect(()=>{
     if(!session?.access_token)return;
@@ -113,8 +192,67 @@ export default function App(){
   },[session?.access_token]);
 
   const save=async(name,values)=>{const next={...saved,[name]:values};setSaved(next);localStorage.setItem('forgeMobile',JSON.stringify(next));if(session)try{await db(session,'workout_sets?on_conflict=user_id,workout_date,exercise',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({user_id:session.user.id,workout_date:new Date().toISOString().slice(0,10),exercise:name,set1:values[0],set2:values[1],set3:values[2]})})}catch(e){console.error(e)}};
-  const remove=async(name,muscle)=>{const next={...custom,[muscle]:(custom[muscle]||[]).filter(x=>x!==name)};setCustom(next);localStorage.setItem('forgeCustomExercises',JSON.stringify(next));setSaved(x=>{const n={...x};delete n[name];localStorage.setItem('forgeMobile',JSON.stringify(n));return n})};
-  const add=(name,muscle,weight)=>{if(!name)return;if((custom[muscle]||[]).includes(name)||(baseExercises[muscle]||[]).includes(name))return;const next={...custom,[muscle]:[...(custom[muscle]||[]),name]};setCustom(next);localStorage.setItem('forgeCustomExercises',JSON.stringify(next));setSaved(x=>({...x,[name]:[weight,weight,weight]}))};
+
+  const remove=async(name,muscle)=>{
+    const next={...exercises,[muscle]:(exercises[muscle]||[]).filter(x=>x!==name)};
+    setExercises(next);
+    localStorage.setItem('forgeExercises',JSON.stringify(next));
+    setSaved(x=>{const n={...x};delete n[name];localStorage.setItem('forgeMobile',JSON.stringify(n));return n});
+  };
+
+  const add=(name,muscle,weight)=>{
+    if(!name)return;
+    const trimmed=name.trim();
+    if(!trimmed)return;
+    if((exercises[muscle]||[]).includes(trimmed))return;
+    const next={...exercises,[muscle]:[...(exercises[muscle]||[]),trimmed]};
+    setExercises(next);
+    localStorage.setItem('forgeExercises',JSON.stringify(next));
+    if(weight){
+      const nextSaved={...saved,[trimmed]:[weight,weight,weight]};
+      setSaved(nextSaved);
+      localStorage.setItem('forgeMobile',JSON.stringify(nextSaved));
+    }
+  };
+
+  const edit=async(oldName,oldMuscle,newName,newMuscle)=>{
+    if(!newName)return;
+    const trimmed=newName.trim();
+    if(!trimmed)return;
+
+    const next={...exercises};
+    next[oldMuscle]=(next[oldMuscle]||[]).filter(x=>x!==oldName);
+    const targetList=next[newMuscle]||[];
+    if(!targetList.includes(trimmed)){
+      next[newMuscle]=[...targetList,trimmed];
+    }
+    setExercises(next);
+    localStorage.setItem('forgeExercises',JSON.stringify(next));
+
+    if(trimmed!==oldName){
+      setSaved(x=>{
+        const n={...x};
+        if(n[oldName]!==undefined){
+          n[trimmed]=n[oldName];
+          delete n[oldName];
+        }
+        localStorage.setItem('forgeMobile',JSON.stringify(n));
+        return n;
+      });
+      if(session?.user?.id){
+        try{
+          await db(session,'workout_sets?user_id=eq.'+session.user.id+'&exercise=eq.'+encodeURIComponent(oldName),{
+            method:'PATCH',
+            headers:{Prefer:'return=minimal'},
+            body:JSON.stringify({exercise:trimmed})
+          });
+        }catch(e){
+          console.error('Failed to sync exercise rename to Supabase:',e);
+        }
+      }
+    }
+  };
+
   if(!session)return <AuthGate onReady={setSession}/>;
-  return <div className="app"><header className="topbar"><div className="logo">FORGE<span>●</span></div><div className="iconbtn">●</div></header><main>{page==='home'&&<Workout day={day} setDay={setDay} saved={saved} onSave={save} onAdd={add} onDelete={remove} custom={custom}/>} {page==='profile'&&<Profile session={session} onProfileUpdate={setSession}/>}{page==='diet'&&<Diet/>}{page==='todo'&&<Todo token={session}/>}</main><div className="bottom"><nav className="nav">{[['home','⌂','Today'],['profile','◉','Profile'],['diet','⌁','Diet'],['todo','✓','Todo']].map(([id,icon,label])=><button className={page===id?'active':''} onClick={()=>setPage(id)} key={id}><i>{icon}</i>{label}</button>)}</nav></div></div>;
+  return <div className="app"><header className="topbar"><div className="logo">FORGE<span>●</span></div><div className="iconbtn">●</div></header><main>{page==='home'&&<Workout day={day} setDay={setDay} saved={saved} onSave={save} onAdd={add} onDelete={remove} onEdit={edit} exercises={exercises}/>} {page==='profile'&&<Profile session={session} onProfileUpdate={setSession}/>}{page==='diet'&&<Diet/>}{page==='todo'&&<Todo token={session}/>}</main><div className="bottom"><nav className="nav">{[['home','⌂','Today'],['profile','◉','Profile'],['diet','⌁','Diet'],['todo','✓','Todo']].map(([id,icon,label])=><button className={page===id?'active':''} onClick={()=>setPage(id)} key={id}><i>{icon}</i>{label}</button>)}</nav></div></div>;
 }
