@@ -55,7 +55,7 @@ h2{font-size:24px;letter-spacing:-.05em;margin:0}
 <p style="color:#666;font-size:10px;line-height:1.5;margin:12px 0 0">Forge creates a private anonymous account on this device so your data can sync with the cloud.</p>
 </div></div>
 <div class="app" id="forgeApp" style="display:none">
-<header class="topbar"><div class="logo">FORGE<span>●</span></div><button class="iconbtn" onclick="signOut()">↪</button></header>
+<header class="topbar"><div class="logo">FORGE<span>●</span></div><div class="iconbtn" title="Anonymous account">●</div></header>
 <main id="main"></main>
 <div class="bottom"><nav class="nav"><button class="active" onclick="nav(this,'home')"><i>⌂</i>Today</button><button onclick="nav(this,'progress')"><i>↗</i>Progress</button><button onclick="nav(this,'diet')"><i>⌁</i>Diet</button><button onclick="nav(this,'todo')"><i>✓</i>Todo</button></nav></div>
 </div>
@@ -240,6 +240,7 @@ async function restoreAuth(){
   }
   document.getElementById("authGate").style.display="flex";
   document.getElementById("forgeApp").style.display="none";
+  startForge();
 }
 
 async function dbRequest(path,options={}){
