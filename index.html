@@ -72,6 +72,7 @@ const exercises={Chest:["Barbell Bench Press","Incline Dumbbell Press","Cable Fl
 const defaults={"Barbell Bench Press":40,"Incline Dumbbell Press":12.5,"Cable Fly":15,"Rope Pushdown":20,"Overhead Cable Extension":15,"Cable Skull Crusher":15,"Lat Pulldown":45,"Seated Cable Row":40,"Chest-Supported Row":20,"Barbell Curl":20,"Incline Dumbbell Curl":10,"Hammer Curl":12.5,"Cable Lateral Raise":7.5,"Machine Shoulder Press":30,"Rear Delt Fly":20,"Leg Press":100,"Leg Extension":40,"Seated Leg Curl":35};
 let saved=readJSON("forgeMobile",{}), selected=new Intl.DateTimeFormat("en-US",{weekday:"long"}).format(new Date()), current="";
 let customExercises=readJSON("forgeCustomExercises",{});
+if(!exercises.Other)exercises.Other=[];
 Object.entries(customExercises).forEach(([muscle,names])=>{if(!exercises[muscle])exercises[muscle]=[];names.forEach(e=>{if(!exercises[muscle].includes(e))exercises[muscle].push(e)})});
 const days=["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
 function getSets(e){
@@ -101,7 +102,7 @@ function showAddExercise(){
 const box=document.getElementById("addExerciseBox");
 box.innerHTML=`<div class="exercise" style="margin-top:12px;padding:18px"><div class="eyebrow">NEW EXERCISE</div>
 <input id="newExerciseName" class="money-input" style="margin-top:10px;font-size:16px" placeholder="Exercise name">
-<select id="newExerciseMuscle" class="select-input" style="margin-top:9px"><option>Chest</option><option>Triceps</option><option>Back</option><option>Biceps</option><option>Shoulders</option><option>Legs</option></select>
+<select id="newExerciseMuscle" class="select-input" style="margin-top:9px"><option>Chest</option><option>Triceps</option><option>Back</option><option>Biceps</option><option>Shoulders</option><option>Legs</option><option>Other</option></select>
 <input id="newExerciseWeight" class="select-input" style="margin-top:9px" type="number" step=".5" min="0" placeholder="Starting weight (kg)">
 <button class="save" style="margin-top:10px" onclick="addExercise()">ADD TO WORKOUT</button></div>`;
 }
