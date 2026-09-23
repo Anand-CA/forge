@@ -57,7 +57,7 @@ h2{font-size:24px;letter-spacing:-.05em;margin:0}
 <div class="app" id="forgeApp" style="display:none">
 <header class="topbar"><div class="logo">FORGE<span>●</span></div><div class="iconbtn" title="Anonymous account">●</div></header>
 <main id="main"></main>
-<div class="bottom"><nav class="nav"><button class="active" onclick="nav(this,'home')"><i>⌂</i>Today</button><button onclick="nav(this,'progress')"><i>↗</i>Progress</button><button onclick="nav(this,'diet')"><i>⌁</i>Diet</button><button onclick="nav(this,'todo')"><i>✓</i>Todo</button></nav></div>
+<div class="bottom"><nav class="nav"><button class="active" onclick="nav(this,'home')"><i>⌂</i>Today</button><button onclick="nav(this,'profile')"><i>◉</i>Profile</button><button onclick="nav(this,'diet')"><i>⌁</i>Diet</button><button onclick="nav(this,'todo')"><i>✓</i>Todo</button></nav></div>
 </div>
 <div class="sheet-bg" id="sheetBg"><div class="sheet">
 <div class="grab"></div><div class="sheet-head"><div><div class="eyebrow" id="sheetMuscle"></div><h3 id="sheetName"></h3></div><button class="close" onclick="closeSheet()">×</button></div>
@@ -92,8 +92,15 @@ function renderWorkout(){
 let groups=plan[selected], area=document.getElementById("workoutArea");
 if(groups[0]==="Rest"){area.innerHTML=`<section class="section rest"><div class="eyebrow">RECOVERY DAY</div><div class="big">Rest today.<br>Come back stronger.</div><p>No workout is scheduled for ${selected}. Recovery is part of progressive overload.</p></section>`;return}
 let html=`<section class="section"><div class="section-head"><h2>${groups.join(" + ")}</h2><span>${groups.reduce((a,m)=>a+exercises[m].length,0)} exercises</span></div>`;
-let n=0;groups.forEach(m=>exercises[m].forEach(e=>{n++;let sets=getSets(e),last=Math.max(...sets),target=last+2.5;html+=`<article class="exercise"><div class="ex-top"><div><div class="num">${String(n).padStart(2,"0")}</div><div class="muscle">${m}</div><div class="name">${e}</div></div><div class="lastbox">BEST<strong>${last} kg</strong></div></div><div class="target"><div class="target-row"><span>Next target</span><b>${target} kg</b></div><div class="inline-sets"><label class="setbox"><small>Set 1</small><input id="set_${n}_1" type="number" step=".5" value="${sets[0]}"></label><label class="setbox"><small>Set 2</small><input id="set_${n}_2" type="number" step=".5" value="${sets[1]}"></label><label class="setbox"><small>Set 3</small><input id="set_${n}_3" type="number" step=".5" value="${sets[2]}"></label></div><button class="save-inline" onclick="saveInline('${e}',${n})">SAVE EXERCISE</button></div></article>`})); 
-area.innerHTML=html+"</section>";
+let n=0;groups.forEach(m=>exercises[m].forEach(e=>{n++;let sets=getSets(e),last=Math.max(...sets),target=last+2.5;html+=`<article class="exercise"><div class="ex-top"><div><div class="num">${String(n).padStart(2,"0")}</div><div class="muscle">${m}</div><div class="name">${e}</div></div><div class="lastbox">BEST<strong>${last} kg</strong></div></div><div class="target"><div class="target-row"><span>Next target</span><b>${target} kg</b></div><div class="inline-sets"><label class="setbox"><small>Set 1</small><input id="set_${n}_1" type="number" step=".5" value="${sets[0]}" data-original="${sets[0]}"></label><label class="setbox"><small>Set 2</small><input id="set_${n}_2" type="number" step=".5" value="${sets[1]}" data-original="${sets[1]}"></label><label class="setbox"><small>Set 3</small><input id="set_${n}_3" type="number" step=".5" value="${sets[2]}" data-original="${sets[2]}"></label></div><button id="save_${n}" class="save-inline" style="display:none" onclick="saveInline('${e}',${n})">SAVE EXERCISE</button></div></article>`})); 
+area.innerHTML=html+"</section>"; area.querySelectorAll(".setbox input").forEach(input=>input.addEventListener("input",()=>updateExerciseSaveState(input.closest(".exercise")));
+}
+function updateExerciseSaveState(card){
+if(!card)return;
+const inputs=[...card.querySelectorAll(".setbox input")];
+const changed=inputs.some(input=>Number(input.value)!==Number(input.dataset.original));
+const btn=card.querySelector(".save-inline");
+if(btn)btn.style.display=changed?"block":"none";
 }
 function openSheet(e,m){current=e;sheetName.textContent=e;sheetMuscle.textContent=m;let sets=getSets(e);i1.value=sets[0];i2.value=sets[1];i3.value=sets[2];sheetBg.classList.add("open")}
 function closeSheet(){sheetBg.classList.remove("open")}
@@ -117,11 +124,30 @@ function nav(btn,page){
 document.querySelectorAll(".nav button").forEach(x=>x.classList.remove("active"));
 btn.classList.add("active");
 if(page==="home"){render();return}
-if(page==="progress"){
-main.innerHTML=`<div class="eyebrow">YOUR PROFILE</div><h1>Train with<br>context.</h1>
-<div class="exercise"><div class="eyebrow">BODY</div><div class="name" style="margin-top:9px">177 cm · 75 kg</div><p style="color:var(--muted);font-size:12px;line-height:1.5">Your current body stats are shown here so your training and nutrition targets have context.</p></div>
-<div class="exercise"><div class="eyebrow">LIFESTYLE</div><div class="name" style="margin-top:9px">Work from home</div><p style="color:var(--muted);font-size:12px;line-height:1.5">Low daily movement can be easy to miss with WFH. Use the diet section to keep meals consistent.</p></div>
-<div class="exercise"><div class="eyebrow">PROGRESSIVE OVERLOAD</div><div class="name" style="margin-top:9px">Beat your previous number.</div><p style="color:var(--muted);font-size:12px;line-height:1.5">Every saved exercise remembers your recent best weight and suggests the next target.</p></div>`; return;
+if(page==="profile"){
+const profile=readJSON("forgeProfile",{name:"",height:"177",weight:"75",goal:"Lean bulk",activity:"Work from home"});
+main.innerHTML=`<div class="eyebrow">PROFILE / PERSONAL DATA</div><h1>Build your<br>profile.</h1>
+<div class="exercise" style="padding:18px">
+<div class="eyebrow">IDENTITY</div>
+<input id="profileName" class="money-input" style="font-size:17px;margin-top:10px" placeholder="Your name" value="${escapeHtml(profile.name)}">
+</div>
+<div class="exercise" style="padding:18px">
+<div class="eyebrow">BODY</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:10px">
+<label class="eyebrow">HEIGHT CM<input id="profileHeight" class="select-input" style="margin-top:5px" type="number" value="${profile.height}"></label>
+<label class="eyebrow">WEIGHT KG<input id="profileWeight" class="select-input" style="margin-top:5px" type="number" step=".1" value="${profile.weight}"></label>
+</div></div>
+<div class="exercise" style="padding:18px">
+<div class="eyebrow">TRAINING GOAL</div>
+<select id="profileGoal" class="select-input" style="margin-top:10px">
+<option ${profile.goal==="Lean bulk"?"selected":""}>Lean bulk</option><option ${profile.goal==="Muscle gain"?"selected":""}>Muscle gain</option><option ${profile.goal==="Fat loss"?"selected":""}>Fat loss</option><option ${profile.goal==="Maintain"?"selected":""}>Maintain</option>
+</select>
+<div class="eyebrow" style="margin-top:16px">LIFESTYLE</div>
+<select id="profileActivity" class="select-input" style="margin-top:10px">
+<option ${profile.activity==="Work from home"?"selected":""}>Work from home</option><option ${profile.activity==="Office"?"selected":""}>Office</option><option ${profile.activity==="Active"?"selected":""}>Active</option>
+</select></div>
+<button class="save" onclick="saveProfile()">SAVE PROFILE</button>
+<div class="exercise" style="margin-top:12px"><div class="eyebrow">ACCOUNT</div><div class="name" style="margin-top:9px">Anonymous Forge account</div><p style="color:var(--muted);font-size:11px;line-height:1.5">Your account is anonymous. Clearing this browser's site data can remove access to this anonymous identity.</p></div>`; return;
 }
 if(page==="history"){
 main.innerHTML=`<div class="eyebrow">SESSION HISTORY</div><h1>Your work,<br>logged.</h1>
@@ -150,6 +176,10 @@ main.innerHTML=`<div class="eyebrow">PLANNING / MONTHLY TIMELINE</div><h1>Get th
 <div class="exercise"><div class="eyebrow">ADD TODO</div><input id="todoText" class="money-input" style="font-size:15px" placeholder="What needs to be done?"><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px"><input id="todoDate" class="select-input" type="date"><button class="save-inline" style="margin:0" onclick="addTodo()">ADD TODO</button></div><p style="color:var(--muted);font-size:11px;margin-bottom:0">No date = today. Select a date to receive a push reminder on that date.</p></div>
 <div class="section-head"><h2>Timeline</h2><span>your tasks</span></div><div id="todoTimeline"></div><div class="section-head" style="margin-top:22px"><h2>Overdue</h2><span>needs attention</span></div><div id="overdueTodos"></div>`; renderTodos(); return;
 }
+}
+function saveProfile(){
+const profile={name:document.getElementById("profileName").value.trim(),height:document.getElementById("profileHeight").value,weight:document.getElementById("profileWeight").value,goal:document.getElementById("profileGoal").value,activity:document.getElementById("profileActivity").value};
+localStorage.setItem("forgeProfile",JSON.stringify(profile)); toast("Profile saved ✓");
 }
 function readJSON(key,fallback){try{const raw=localStorage.getItem(key);return raw?JSON.parse(raw):fallback}catch(_){return fallback}}
 function escapeHtml(value){const d=document.createElement("div");d.textContent=String(value??"");return d.innerHTML}
