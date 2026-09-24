@@ -73,7 +73,7 @@ FORGE supports **real browser push notifications** so you can get hydration remi
 
 Forge accounts use a username and password. Usernames are case-insensitive and may contain spaces or punctuation. Passwords must be 8–72 characters. Supabase Auth hashes passwords before storing them; Forge never stores or logs a plaintext password. The browser only receives the normal Supabase session tokens.
 
-Username signup and sign-in call Supabase Auth directly from the browser using the project's publishable key configured in `src/App.jsx`; no Netlify auth function or service role key is used. Usernames map to deterministic internal, non-deliverable email identifiers, so password recovery by email is not available in this username-only flow. To allow signup without an email address, disable email confirmation in the Supabase Auth settings. Existing accounts created by the previous Netlify flow use the same identifier and remain compatible. Existing anonymous installs can continue using their current session, but new username accounts are separate Supabase users.
+Username signup and sign-in call Supabase Auth directly from the browser using the project's publishable key configured in `src/App.jsx`; no Netlify auth function or service role key is used. Usernames map to deterministic, non-deliverable identifiers under the reserved `example.com` domain, so password recovery by email is not available in this username-only flow. To allow signup without an email address, disable email confirmation in the Supabase Auth settings. Sign-in also checks the prior `.invalid` identifier format for accounts created by the old Netlify flow. Existing anonymous installs can continue using their current session, but new username accounts are separate Supabase users.
 
 ---
 

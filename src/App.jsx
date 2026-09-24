@@ -29,11 +29,17 @@ async function usernameAuth(action,username,password){
   const normalized=username.trim().normalize('NFKC').toLowerCase();
   const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(normalized));
   const id=Array.from(new Uint8Array(digest),b=>b.toString(16).padStart(2,'0')).join('');
-  const email=`u-${id}@users.forge.invalid`;
+  const emails=[`u-${id}@users.forge.example.com`,`u-${id}@users.forge.invalid`];
   const path=action==='signup'?'signup':'token?grant_type=password';
-  const body=action==='signup'?{email,password,data:{username:username.trim()}}:{email,password};
+  const bodyFor=email=>action==='signup'?{email,password,data:{username:username.trim()}}:{email,password};
   let d;
-  try{d=await authRequest(path,body)}catch(e){
+  try{
+    if(action==='signup')d=await authRequest(path,bodyFor(emails[0]));
+    else{
+      try{d=await authRequest(path,bodyFor(emails[0]))}
+      catch{d=await authRequest(path,bodyFor(emails[1]))}
+    }
+  }catch(e){
     const message=e.message||'';
     if(action==='signup'&&/already|registered|exists|user.*found/i.test(message))throw Error('That username is already in use.');
     if(action==='signin')throw Error('Username or password is incorrect.');
