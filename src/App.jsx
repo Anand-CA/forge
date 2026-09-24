@@ -13,13 +13,22 @@ const defaultDiet=[
   {id:'post-workout',time:'20:30',name:'Post-workout',food:'Protein + creatine + fluids'},
   {id:'dinner',time:'22:30',name:'Dinner',food:'Rice + soya + eggs'}
 ]
-const read=(k,f)=>{try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(f))}catch{return f}}
+const storageUserId=()=>{try{return JSON.parse(localStorage.getItem('forgeSession')||'{}')?.user?.id||'signed-out'}catch{return 'signed-out'}}
+const storageKey=k=>k==='forgeSession'?k:`${storageUserId()}:${k}`
+const migrateLegacyCache=()=>{try{const id=JSON.parse(localStorage.getItem('forgeSession')||'{}')?.user?.id;if(!id)return;for(const k of ['forgeProfile','forgeTodos','forgeMobile','forgeExercises','forgeCustomExercises','forgeExerciseConfig','forgeDiet']){const scoped=`${id}:${k}`;if(localStorage.getItem(scoped)===null&&localStorage.getItem(k)!==null)localStorage.setItem(scoped,localStorage.getItem(k))}}catch{}}
+migrateLegacyCache()
+const read=(k,f)=>{try{return JSON.parse(localStorage.getItem(storageKey(k))||JSON.stringify(f))}catch{return f}}
+const write=(k,v)=>localStorage.setItem(storageKey(k),v)
 const getToken=t=>(typeof t==='string'?t:t?.access_token)||SUPABASE_ANON_KEY
 const headers=t=>({apikey:SUPABASE_ANON_KEY,Authorization:'Bearer '+getToken(t),'Content-Type':'application/json'})
-async function auth(){const old=read('forgeSession',null);if(old?.access_token&&old.access_token.split('.').length===3)return old;localStorage.removeItem('forgeSession');const r=await fetch(SUPABASE_URL+'/auth/v1/signup',{method:'POST',headers:headers(),body:'{}'});const d=await r.json();if(!r.ok)throw Error(d.msg||d.error_description||'Authentication failed');localStorage.setItem('forgeSession',JSON.stringify(d));return d}
+const tokenExpiry=s=>{try{return JSON.parse(atob(s.access_token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/'))).exp*1000}catch{return 0}}
+async function authRequest(path,body,token){const r=await fetch(SUPABASE_URL+'/auth/v1/'+path,{method:token?'PUT':'POST',headers:headers(token),body:JSON.stringify(body)});const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.msg||d.error_description||d.message||'Authentication failed');return d}
+const persistSession=s=>{if(s?.access_token)write('forgeSession',JSON.stringify(s));return s}
+async function refreshSession(s){if(!s?.refresh_token)return null;return persistSession(await authRequest('token?grant_type=refresh_token',{refresh_token:s.refresh_token}))}
+async function usernameAuth(action,username,password){const r=await fetch('/.netlify/functions/auth',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,username,password})});const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.error||'Authentication failed');return persistSession(d.session)}
 async function db(token,path,options={}){const r=await fetch(SUPABASE_URL+'/rest/v1/'+path,{...options,headers:{...headers(token),...(options.headers||{})}});if(!r.ok)throw Error(await r.text());return r.status===204?null:r.json()}
 
-function AuthGate({onReady}){const [busy,setBusy]=useState(false);const [error,setError]=useState('');const start=async()=>{setBusy(true);setError('');try{const s=await auth();onReady(s)}catch(e){setError(e.message)}finally{setBusy(false)}};return <div className="authGate"><div className="authCard"><div className="logo">FORGE<span>●</span></div><div className="eyebrow authEyebrow">WELCOME TO FORGE</div><h1>Train.<br/>Track.<br/>Forge.</h1><p>Start instantly. No email or password required.</p>{error&&<p className="error">{error}</p>}<button className="save" disabled={busy} onClick={start}>{busy?'STARTING…':'START FORGE'}</button><small>Forge creates a private anonymous account on this device.</small></div></div>}
+function AuthGate({onReady}){const [mode,setMode]=useState('signin');const [username,setUsername]=useState('');const [password,setPassword]=useState('');const [busy,setBusy]=useState(false);const [error,setError]=useState('');const submit=async e=>{e.preventDefault();setBusy(true);setError('');try{if(!username.trim()||!password)throw Error('Enter your username and password.');if(mode==='signup'&&password.length<8)throw Error('Use a password with at least 8 characters.');const s=await usernameAuth(mode,username,password);onReady(s)}catch(e){setError(e.message)}finally{setBusy(false)}};return <div className="authGate"><form className="authCard" onSubmit={submit}><div className="logo">FORGE<span>●</span></div><div className="eyebrow authEyebrow">{mode==='signup'?'CREATE YOUR ACCOUNT':'WELCOME BACK'}</div><h1>{mode==='signup'?<>Train.<br/>Track.<br/>Forge.</>:<>Your training.<br/>Your account.</>}</h1><p>{mode==='signup'?'Choose a username and password to sync your training across devices.':'Sign in to continue your training.'}</p><label className="authLabel">Username<input className="money-input authInput" autoComplete="username" required maxLength={80} value={username} onChange={e=>setUsername(e.target.value)} /></label><label className="authLabel">Password<input className="money-input authInput" type="password" autoComplete={mode==='signup'?'new-password':'current-password'} minLength={mode==='signup'?8:1} required value={password} onChange={e=>setPassword(e.target.value)} /></label>{error&&<p className="error" role="alert">{error}</p>}<button className="save" disabled={busy}>{busy?'PLEASE WAIT…':mode==='signup'?'CREATE ACCOUNT':'SIGN IN'}</button><div className="authLinks"><button type="button" onClick={()=>{setMode(mode==='signup'?'signin':'signup');setError('')}}>{mode==='signup'?'Already have an account? Sign in':'New to Forge? Create account'}</button></div></form></div>}
 
 function ExerciseCard({name,muscle,saved,onSave,onDelete,onEdit,config,onConfigUpdate}){
   const [swiped,setSwiped]=useState(false);
@@ -123,7 +132,7 @@ function Profile({session,onProfileUpdate}){
 
   const save=async()=>{
     setSaving(true);
-    localStorage.setItem('forgeProfile',JSON.stringify(p));
+    write('forgeProfile',JSON.stringify(p));
     if(session?.access_token&&session?.user?.id){
       try{
         await db(session,'profiles?on_conflict=id',{
@@ -140,7 +149,7 @@ function Profile({session,onProfileUpdate}){
           const updated=await r.json();
           if(updated?.id){
             const nextSession={...session,user:updated};
-            localStorage.setItem('forgeSession',JSON.stringify(nextSession));
+            write('forgeSession',JSON.stringify(nextSession));
             onProfileUpdate?.(nextSession);
           }
         }
@@ -286,7 +295,7 @@ function Todo({token}){
             done:!!t.done
           }));
           setTodos(next);
-          localStorage.setItem('forgeTodos',JSON.stringify(next));
+          write('forgeTodos',JSON.stringify(next));
         }
       })
       .catch(e=>{
@@ -316,7 +325,7 @@ function Todo({token}){
       if(t){
         setTodos(x=>{
           const next=[{id:t.id,text:t.text,done:false},...x];
-          localStorage.setItem('forgeTodos',JSON.stringify(next));
+          write('forgeTodos',JSON.stringify(next));
           return next;
         });
       }
@@ -330,7 +339,7 @@ function Todo({token}){
     const next=!t.done;
     setTodos(x=>{
       const updated=x.map(a=>a.id===t.id?{...a,done:next}:a);
-      localStorage.setItem('forgeTodos',JSON.stringify(updated));
+      write('forgeTodos',JSON.stringify(updated));
       return updated;
     });
     try{
@@ -346,7 +355,7 @@ function Todo({token}){
   const remove=async id=>{
     setTodos(x=>{
       const next=x.filter(t=>t.id!==id);
-      localStorage.setItem('forgeTodos',JSON.stringify(next));
+      write('forgeTodos',JSON.stringify(next));
       return next;
     });
     try{
@@ -416,9 +425,18 @@ export default function App(){
 
   useEffect(()=>{
     if(!session?.access_token)return;
-    fetch(SUPABASE_URL+'/auth/v1/user',{headers:headers(session)})
-      .then(r=>r.ok?r.json():null)
-      .then(u=>{
+    let active=true;
+    let timer;
+    (async()=>{
+      try{
+        let current=session;
+        if(tokenExpiry(current)<Date.now()+60_000)current=await refreshSession(current);
+        if(!current?.access_token)throw Error('Session expired');
+        const r=await fetch(SUPABASE_URL+'/auth/v1/user',{headers:headers(current)});
+        if(!r.ok)throw Error('Session expired');
+        const u=await r.json();
+        if(!active)return;
+        setSession({...current,user:u});
         if(u?.user_metadata&&(u.user_metadata.name||u.user_metadata.height)){
           const m=u.user_metadata;
           const current=read('forgeProfile',{});
@@ -429,18 +447,20 @@ export default function App(){
             goal:m.goal??current.goal??'Lean bulk',
             activity:m.activity??current.activity??'Work from home'
           };
-          localStorage.setItem('forgeProfile',JSON.stringify(merged));
-          setSession(s=>s?{...s,user:u}:s);
+          write('forgeProfile',JSON.stringify(merged));
         }
-      })
-      .catch(()=>{});
+        const delay=Math.max(1000,tokenExpiry(current)-Date.now()-60_000);
+        timer=setTimeout(async()=>{try{const renewed=await refreshSession(current);if(active)setSession(renewed)}catch{if(active){localStorage.removeItem('forgeSession');setSession(null)}}},delay);
+      }catch{if(active){localStorage.removeItem('forgeSession');setSession(null)}}
+    })();
+    return()=>{active=false;clearTimeout(timer)};
   },[session?.access_token]);
 
   const updateExerciseConfig=(name,patch)=>{
     setExerciseConfig(prev=>{
       const current=prev[name]||{sets:3,reps:8};
       const next={...prev,[name]:{...current,...patch}};
-      localStorage.setItem('forgeExerciseConfig',JSON.stringify(next));
+      write('forgeExerciseConfig',JSON.stringify(next));
       return next;
     });
   };
@@ -458,14 +478,14 @@ export default function App(){
         next[oldMuscle]=(next[oldMuscle]||[]).filter(x=>x!==oldName);
         next[newMuscle]=Array.from(new Set([...(next[newMuscle]||[]),newName]));
         setExercises(next);
-        localStorage.setItem('forgeExercises',JSON.stringify(next));
-        if(newName!==oldName)setSaved(prev=>{const n={...prev};if(n[oldName]!==undefined){n[newName]=n[oldName];delete n[oldName]}localStorage.setItem('forgeMobile',JSON.stringify(n));return n});
+        write('forgeExercises',JSON.stringify(next));
+        if(newName!==oldName)setSaved(prev=>{const n={...prev};if(n[oldName]!==undefined){n[newName]=n[oldName];delete n[oldName]}write('forgeMobile',JSON.stringify(n));return n});
         if(newName!==oldName||newMuscle!==oldMuscle)updateExerciseConfig(newName,{...(exerciseConfig[oldName]||{}),...(args.sets?{sets:Number(args.sets)}:{}),...(args.reps?{reps:Number(args.reps)}:{})});
       }
       updateExerciseConfig(newName,{sets:args.sets?Math.max(1,Math.min(12,Number(args.sets))):Number(exerciseConfig[oldName]?.sets||3),reps:args.reps?Math.max(1,Math.min(100,Number(args.reps))):Number(exerciseConfig[oldName]?.reps||8)});
       if(args.weight!==undefined){
         const count=Number(args.sets||exerciseConfig[oldName]?.sets||3);
-        setSaved(prev=>{const n={...prev,[newName]:Array.from({length:count},()=>Number(args.weight)||0)};localStorage.setItem('forgeMobile',JSON.stringify(n));return n});
+        setSaved(prev=>{const n={...prev,[newName]:Array.from({length:count},()=>Number(args.weight)||0)};write('forgeMobile',JSON.stringify(n));return n});
       }
       return `Updated ${newName} to ${args.sets||exerciseConfig[oldName]?.sets||3} sets × ${args.reps||exerciseConfig[oldName]?.reps||8} reps.`;
     }
@@ -501,38 +521,38 @@ export default function App(){
       const idx=diet.findIndex(m=>norm(m.id)===norm(args.meal)||norm(m.name)===norm(args.meal)||norm(m.food).includes(norm(args.meal)));
       if(idx<0)return 'I could not find that meal.';
       const next=diet.map((m,i)=>i===idx?{...m,time:args.time||m.time,name:args.newName||args.name||m.name,food:args.food||args.items||m.food}:m);
-      setDiet(next);localStorage.setItem('forgeDiet',JSON.stringify(next));
+      setDiet(next);write('forgeDiet',JSON.stringify(next));
       return `Updated ${next[idx].name}.`;
     }
     if(tool==='add_meal'){
       const item={id:'meal-'+Date.now(),time:args.time||'12:00',name:args.name||'Meal',food:args.food||args.items||''};
       const next=[...diet,item].sort((a,b)=>a.time.localeCompare(b.time));
-      setDiet(next);localStorage.setItem('forgeDiet',JSON.stringify(next));
+      setDiet(next);write('forgeDiet',JSON.stringify(next));
       return `Added ${item.name}.`;
     }
     if(tool==='delete_meal'){
       const idx=diet.findIndex(m=>norm(m.id)===norm(args.meal)||norm(m.name)===norm(args.meal));
       if(idx<0)return 'I could not find that meal.';
-      const next=diet.filter((_,i)=>i!==idx);setDiet(next);localStorage.setItem('forgeDiet',JSON.stringify(next));
+      const next=diet.filter((_,i)=>i!==idx);setDiet(next);write('forgeDiet',JSON.stringify(next));
       return `Deleted ${diet[idx].name}.`;
     }
     if(tool==='replace_meal'){
       const idx=diet.findIndex(m=>norm(m.id)===norm(args.meal)||norm(m.name)===norm(args.meal));
       if(idx<0)return 'I could not find that meal.';
       const old=diet[idx], item={...old,id:old.id,time:args.time||old.time,name:args.name||args.newName||old.name,food:args.food||args.items||old.food};
-      const next=diet.map((m,i)=>i===idx?item:m);setDiet(next);localStorage.setItem('forgeDiet',JSON.stringify(next));
+      const next=diet.map((m,i)=>i===idx?item:m);setDiet(next);write('forgeDiet',JSON.stringify(next));
       return `Replaced ${old.name}.`;
     }
     return 'I could not apply that diet change.';
   };
 
-  const save=async(name,values)=>{const next={...saved,[name]:values};setSaved(next);localStorage.setItem('forgeMobile',JSON.stringify(next));if(session)try{await db(session,'workout_sets?on_conflict=user_id,workout_date,exercise',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({user_id:session.user.id,workout_date:new Date().toISOString().slice(0,10),exercise:name,set1:values[0],set2:values[1],set3:values[2]})})}catch(e){console.error(e)}};
+  const save=async(name,values)=>{const next={...saved,[name]:values};setSaved(next);write('forgeMobile',JSON.stringify(next));if(session)try{await db(session,'workout_sets?on_conflict=user_id,workout_date,exercise',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({user_id:session.user.id,workout_date:new Date().toISOString().slice(0,10),exercise:name,set1:values[0],set2:values[1],set3:values[2]})})}catch(e){console.error(e)}};
 
   const remove=async(name,muscle)=>{
     const next={...exercises,[muscle]:(exercises[muscle]||[]).filter(x=>x!==name)};
     setExercises(next);
-    localStorage.setItem('forgeExercises',JSON.stringify(next));
-    setSaved(x=>{const n={...x};delete n[name];localStorage.setItem('forgeMobile',JSON.stringify(n));return n});
+    write('forgeExercises',JSON.stringify(next));
+    setSaved(x=>{const n={...x};delete n[name];write('forgeMobile',JSON.stringify(n));return n});
   };
 
   const add=(name,muscle,weight)=>{
@@ -542,11 +562,11 @@ export default function App(){
     if((exercises[muscle]||[]).includes(trimmed))return;
     const next={...exercises,[muscle]:[...(exercises[muscle]||[]),trimmed]};
     setExercises(next);
-    localStorage.setItem('forgeExercises',JSON.stringify(next));
+    write('forgeExercises',JSON.stringify(next));
     if(weight){
       const nextSaved={...saved,[trimmed]:[weight,weight,weight]};
       setSaved(nextSaved);
-      localStorage.setItem('forgeMobile',JSON.stringify(nextSaved));
+      write('forgeMobile',JSON.stringify(nextSaved));
     }
   };
 
@@ -562,7 +582,7 @@ export default function App(){
       next[newMuscle]=[...targetList,trimmed];
     }
     setExercises(next);
-    localStorage.setItem('forgeExercises',JSON.stringify(next));
+    write('forgeExercises',JSON.stringify(next));
 
     if(trimmed!==oldName){
       setSaved(x=>{
@@ -571,7 +591,7 @@ export default function App(){
           n[trimmed]=n[oldName];
           delete n[oldName];
         }
-        localStorage.setItem('forgeMobile',JSON.stringify(n));
+        write('forgeMobile',JSON.stringify(n));
         return n;
       });
       if(session?.user?.id){
@@ -588,6 +608,7 @@ export default function App(){
     }
   };
 
-  if(!session)return <AuthGate onReady={setSession}/>;
-  return <div className="app"><header className="topbar"><div className="logo">FORGE<span>●</span></div><button className="iconbtn profile-nav-btn" title="Profile" onClick={()=>setPage('profile')}>●</button></header><main>{page==='home'&&<Workout day={day} setDay={setDay} saved={saved} onSave={save} onAdd={add} onDelete={remove} onEdit={edit} exercises={exercises} exerciseConfig={exerciseConfig} onConfigUpdate={updateExerciseConfig}/>} {page==='profile'&&<Profile session={session} onProfileUpdate={setSession}/>} {page==='diet'&&<Diet diet={diet}/>} {page==='ai'&&<ForgeAI session={session} day={day} exercises={exercises} exerciseConfig={exerciseConfig} diet={diet} onExerciseAction={onExerciseAction} onDietAction={onDietAction}/>} {page==='todo'&&<Todo token={session}/>}</main><div className="bottom"><nav className="nav">{[['home','⌂','Today'],['diet','⌁','Diet'],['ai','✦','AI'],['todo','✓','Todo']].map(([id,icon,label])=><button className={page===id?'active':''} onClick={()=>setPage(id)} key={id}><i>{icon}</i>{label}</button>)}</nav></div></div>;
+  if(!session)return <AuthGate onReady={s=>{setSession(s);window.location.reload()}}/>;
+  const signOut=async()=>{try{await fetch(SUPABASE_URL+'/auth/v1/logout',{method:'POST',headers:headers(session)})}catch{}localStorage.removeItem('forgeSession');setSession(null)};
+  return <div className="app"><header className="topbar"><div className="logo">FORGE<span>●</span></div><div className="topbarActions"><button className="iconbtn profile-nav-btn" title="Profile" onClick={()=>setPage('profile')}>●</button><button className="signOut" onClick={signOut}>SIGN OUT</button></div></header><main>{page==='home'&&<Workout day={day} setDay={setDay} saved={saved} onSave={save} onAdd={add} onDelete={remove} onEdit={edit} exercises={exercises} exerciseConfig={exerciseConfig} onConfigUpdate={updateExerciseConfig}/>} {page==='profile'&&<Profile session={session} onProfileUpdate={setSession}/>} {page==='diet'&&<Diet diet={diet}/>} {page==='ai'&&<ForgeAI session={session} day={day} exercises={exercises} exerciseConfig={exerciseConfig} diet={diet} onExerciseAction={onExerciseAction} onDietAction={onDietAction}/>} {page==='todo'&&<Todo token={session}/>}</main><div className="bottom"><nav className="nav">{[['home','⌂','Today'],['diet','⌁','Diet'],['ai','✦','AI'],['todo','✓','Todo']].map(([id,icon,label])=><button className={page===id?'active':''} onClick={()=>setPage(id)} key={id}><i>{icon}</i>{label}</button>)}</nav></div></div>;
 }

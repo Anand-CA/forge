@@ -69,6 +69,20 @@ FORGE supports **real browser push notifications** so you can get hydration remi
 - 🔔 **web-push**
 - 🐙 **GitHub**
 
+## 🔐 Username and password accounts
+
+Forge accounts use a username and password. Usernames are case-insensitive and may contain spaces or punctuation. Passwords must be 8–72 characters. Supabase Auth hashes passwords before storing them; Forge never stores or logs a plaintext password. The browser only receives the normal Supabase session tokens.
+
+The Netlify function at `netlify/functions/auth.js` creates and signs users in through Supabase Auth. Configure these **Netlify environment variables** before deploying (and provide the same values to `netlify dev` for local authentication):
+
+| Variable | Value |
+|---|---|
+| `SUPABASE_URL` | Your Supabase project URL |
+| `SUPABASE_ANON_KEY` | The project's publishable/anon key |
+| `SUPABASE_SERVICE_ROLE_KEY` | The project's service role key; keep this server-side only |
+
+The client uses the publishable key configured in `src/App.jsx`. Never put the service role key in frontend code or commit it to the repository. Username accounts use an internal, non-deliverable email identifier, so password recovery by email is not available in this simple username-only flow. Existing anonymous installs can continue using their current session, but new username accounts are separate Supabase users.
+
 ---
 
 ## 🚀 Deployment
