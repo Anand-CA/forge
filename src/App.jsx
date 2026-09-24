@@ -96,6 +96,7 @@ function AddExercise({onAdd}){const [open,setOpen]=useState(false);const [name,s
 
 function Profile({session,onProfileUpdate}){
   const meta=session?.user?.user_metadata;
+  const [editing,setEditing]=useState(false);
   const [p,setP]=useState(()=>{
     const local=read('forgeProfile',{name:'',height:'177',weight:'75',goal:'Lean bulk',activity:'Work from home'});
     return {
@@ -148,10 +149,67 @@ function Profile({session,onProfileUpdate}){
       }
     }
     setSaving(false);
-    alert('Profile saved ✓');
+    setEditing(false);
   };
 
-  return <><div className="eyebrow">PROFILE / PERSONAL DATA</div><h1>Build your<br/>profile.</h1><div className="exercise"><div className="eyebrow">IDENTITY</div><input className="money-input" placeholder="Your name" value={p.name} onChange={e=>setP({...p,name:e.target.value})}/></div><div className="exercise"><div className="eyebrow">BODY</div><div className="profileGrid"><input className="select-input" type="number" value={p.height} onChange={e=>setP({...p,height:e.target.value})}/><input className="select-input" type="number" value={p.weight} onChange={e=>setP({...p,weight:e.target.value})}/></div></div><div className="exercise"><div className="eyebrow">TRAINING GOAL</div><select className="select-input" value={p.goal} onChange={e=>setP({...p,goal:e.target.value})}>{['Lean bulk','Muscle gain','Fat loss','Maintain'].map(x=><option key={x}>{x}</option>)}</select><div className="eyebrow">LIFESTYLE</div><select className="select-input" value={p.activity} onChange={e=>setP({...p,activity:e.target.value})}>{['Work from home','Office','Active'].map(x=><option key={x}>{x}</option>)}</select></div><button className="save" disabled={saving} onClick={save}>{saving?'SAVING…':'SAVE PROFILE'}</button></>;
+  return <>
+    <div className="eyebrow">PROFILE / PERSONAL DATA</div>
+    <div className="page-title-row">
+      <h1>Build your<br/>profile.</h1>
+      {!editing&&<button className="save-inline" onClick={()=>setEditing(true)}>EDIT</button>}
+    </div>
+
+    {!editing ? <>
+      <div className="exercise">
+        <div className="eyebrow">IDENTITY</div>
+        <div className="name">{p.name||'Your name'}</div>
+      </div>
+
+      <div className="exercise">
+        <div className="eyebrow">BODY</div>
+        <div className="profileGrid">
+          <div><div className="eyebrow">HEIGHT</div><div className="name">{p.height} cm</div></div>
+          <div><div className="eyebrow">WEIGHT</div><div className="name">{p.weight} kg</div></div>
+        </div>
+      </div>
+
+      <div className="exercise">
+        <div className="eyebrow">TRAINING GOAL</div>
+        <div className="name">{p.goal}</div>
+        <div className="eyebrow">LIFESTYLE</div>
+        <div className="name">{p.activity}</div>
+      </div>
+    </> : <>
+      <div className="exercise">
+        <div className="eyebrow">IDENTITY</div>
+        <input className="money-input" placeholder="Your name" value={p.name} onChange={e=>setP({...p,name:e.target.value})}/>
+      </div>
+
+      <div className="exercise">
+        <div className="eyebrow">BODY</div>
+        <div className="profileGrid">
+          <input className="select-input" type="number" value={p.height} onChange={e=>setP({...p,height:e.target.value})}/>
+          <input className="select-input" type="number" value={p.weight} onChange={e=>setP({...p,weight:e.target.value})}/>
+        </div>
+      </div>
+
+      <div className="exercise">
+        <div className="eyebrow">TRAINING GOAL</div>
+        <select className="select-input" value={p.goal} onChange={e=>setP({...p,goal:e.target.value})}>
+          {['Lean bulk','Muscle gain','Fat loss','Maintain'].map(x=><option key={x}>{x}</option>)}
+        </select>
+        <div className="eyebrow">LIFESTYLE</div>
+        <select className="select-input" value={p.activity} onChange={e=>setP({...p,activity:e.target.value})}>
+          {['Work from home','Office','Active'].map(x=><option key={x}>{x}</option>)}
+        </select>
+      </div>
+
+      <div className="todoAdd">
+        <button className="save-inline" onClick={()=>setEditing(false)} disabled={saving}>CANCEL</button>
+        <button className="save" disabled={saving} onClick={save}>{saving?'SAVING…':'SAVE PROFILE'}</button>
+      </div>
+    </>}
+  </>;
 }
 
 function Diet({diet}){
@@ -163,7 +221,6 @@ function Diet({diet}){
 }
 
 function ForgeAI({session,day,exercises,exerciseConfig,diet,onExerciseAction,onDietAction}){
-  const [open,setOpen]=useState(false);
   const [message,setMessage]=useState('');
   const [busy,setBusy]=useState(false);
   const [messages,setMessages]=useState([{role:'assistant',text:'I can change your workout and diet. Try “make bench press 4 sets of 8” or “replace my snack with Greek yogurt and fruit”.'}]);
@@ -201,16 +258,138 @@ function ForgeAI({session,day,exercises,exerciseConfig,diet,onExerciseAction,onD
     }finally{setBusy(false)}
   };
 
-  if(!open)return <button className="ai-fab" onClick={()=>setOpen(true)}><span>✦</span> FORGE AI</button>;
-
   return <div className="ai-panel">
-    <div className="ai-head"><div><div className="eyebrow">FORGE AI</div><h2>Tell Forge what to change.</h2></div><button className="close" onClick={()=>setOpen(false)}>×</button></div>
+    <div className="ai-head">
+      <div><div className="eyebrow">FORGE AI</div><h2>Tell Forge what to change.</h2></div>
+    </div>
     <div className="ai-messages">{messages.map((m,i)=><div key={i} className={'ai-message '+m.role}>{m.text}</div>)}</div>
-    <div className="ai-compose"><input className="money-input" placeholder="e.g. Make bench press 4 × 8" value={message} onChange={e=>setMessage(e.target.value)} onKeyDown={e=>{if(e.key==='Enter')send()}}/><button className="save" disabled={busy} onClick={send}>{busy?'THINKING…':'SEND'}</button></div>
+    <div className="ai-compose">
+      <input className="money-input" placeholder="e.g. Make bench press 4 × 8" value={message} onChange={e=>setMessage(e.target.value)} onKeyDown={e=>{if(e.key==='Enter')send()}}/>
+      <button className="save" disabled={busy} onClick={send}>{busy?'THINKING…':'SEND'}</button>
+    </div>
   </div>;
 }
 
-function Todo({token}){const [todos,setTodos]=useState(read('forgeTodos',[]));const [text,setText]=useState('');const [date,setDate]=useState('');const add=async()=>{if(!text.trim())return;const due=date||new Date().toISOString().slice(0,10);try{const r=await db(token,'todos',{method:'POST',headers:{Prefer:'return=representation'},body:JSON.stringify({user_id:token.user.id,text:text.trim(),due_date:due,done:false})});const t=r?.[0];setTodos(x=>[...x,{id:t?.id||Date.now(),text:text.trim(),date:due,done:false}]);setText('');setDate('')}catch(e){console.error(e);localStorage.removeItem('forgeSession');window.location.reload()}};const toggle=async t=>{const next=!t.done;setTodos(x=>x.map(a=>a.id===t.id?{...a,done:next}:a));try{await db(token,'todos?id=eq.'+encodeURIComponent(t.id),{method:'PATCH',body:JSON.stringify({done:next})})}catch{}};useEffect(()=>localStorage.setItem('forgeTodos',JSON.stringify(todos)),[todos]);return <><div className="eyebrow">PLANNING / MONTHLY TIMELINE</div><h1>Get things<br/>done.</h1><div className="exercise"><div className="eyebrow">ADD TODO</div><input className="money-input" placeholder="What needs to be done?" value={text} onChange={e=>setText(e.target.value)}/><div className="todoAdd"><input className="select-input" type="date" value={date} onChange={e=>setDate(e.target.value)}/><button className="save-inline" onClick={add}>ADD TODO</button></div></div><div className="section-head"><h2>Timeline</h2></div>{todos.sort((a,b)=>a.date.localeCompare(b.date)).map(t=><div className="exercise todoRow" key={t.id}><button className="todo-check" onClick={()=>toggle(t)}>{t.done?'✓':''}</button><div><b className={t.done?'done':''}>{t.text}</b><div className="todo-meta">{t.date}</div></div></div>)}</>}
+function Todo({token}){
+  const [todos,setTodos]=useState([]);
+  const [text,setText]=useState('');
+  const [loading,setLoading]=useState(true);
+
+  useEffect(()=>{
+    let active=true;
+    db(token,'todos?select=*&order=created_at.desc')
+      .then(rows=>{
+        if(active){
+          const next=(rows||[]).map(t=>({
+            id:t.id,
+            text:t.text,
+            done:!!t.done
+          }));
+          setTodos(next);
+          localStorage.setItem('forgeTodos',JSON.stringify(next));
+        }
+      })
+      .catch(e=>{
+        console.error('Failed to load todos:',e);
+        const cached=read('forgeTodos',[]);
+        if(active)setTodos(cached);
+      })
+      .finally(()=>{if(active)setLoading(false)});
+    return ()=>{active=false};
+  },[token]);
+
+  const add=async()=>{
+    const value=text.trim();
+    if(!value)return;
+    try{
+      const r=await db(token,'todos',{
+        method:'POST',
+        headers:{Prefer:'return=representation'},
+        body:JSON.stringify({
+          user_id:token.user.id,
+          text:value,
+          due_date:new Date().toISOString().slice(0,10),
+          done:false
+        })
+      });
+      const t=r?.[0];
+      if(t){
+        setTodos(x=>{
+          const next=[{id:t.id,text:t.text,done:false},...x];
+          localStorage.setItem('forgeTodos',JSON.stringify(next));
+          return next;
+        });
+      }
+      setText('');
+    }catch(e){
+      console.error('Failed to add todo:',e);
+    }
+  };
+
+  const toggle=async t=>{
+    const next=!t.done;
+    setTodos(x=>{
+      const updated=x.map(a=>a.id===t.id?{...a,done:next}:a);
+      localStorage.setItem('forgeTodos',JSON.stringify(updated));
+      return updated;
+    });
+    try{
+      await db(token,'todos?id=eq.'+encodeURIComponent(t.id),{
+        method:'PATCH',
+        body:JSON.stringify({done:next})
+      });
+    }catch(e){
+      console.error('Failed to update todo:',e);
+    }
+  };
+
+  const remove=async id=>{
+    setTodos(x=>{
+      const next=x.filter(t=>t.id!==id);
+      localStorage.setItem('forgeTodos',JSON.stringify(next));
+      return next;
+    });
+    try{
+      await db(token,'todos?id=eq.'+encodeURIComponent(id),{method:'DELETE'});
+    }catch(e){
+      console.error('Failed to delete todo:',e);
+    }
+  };
+
+  return <>
+    <div className="eyebrow">PLANNING / TODO</div>
+    <h1>Get things<br/>done.</h1>
+
+    <div className="exercise">
+      <div className="eyebrow">ADD TODO</div>
+      <div className="todoAdd">
+        <input
+          className="money-input"
+          placeholder="What needs to be done?"
+          value={text}
+          onChange={e=>setText(e.target.value)}
+          onKeyDown={e=>{if(e.key==='Enter')add()}}
+        />
+        <button className="save-inline" onClick={add}>ADD</button>
+      </div>
+    </div>
+
+    <div className="section-head"><h2>Todos</h2></div>
+
+    {loading ? <div className="exercise">Loading…</div> :
+      todos.length===0 ? <div className="exercise">No todos yet.</div> :
+      todos.map(t=>
+        <div className="exercise todoRow" key={t.id}>
+          <button className="todo-check" onClick={()=>toggle(t)}>{t.done?'✓':''}</button>
+          <div style={{flex:1}}>
+            <b className={t.done?'done':''}>{t.text}</b>
+          </div>
+          <button className="close" title="Delete" onClick={()=>remove(t.id)}>×</button>
+        </div>
+      )
+    }
+  </>;
+}
 
 const loadExercises=()=>{
   const stored=read('forgeExercises',null);
