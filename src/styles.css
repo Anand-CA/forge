@@ -49,3 +49,23 @@ h2{font-size:24px;letter-spacing:-.05em;margin:0}
 .ai-compose{position:absolute;bottom:0;left:0;right:0;padding:10px 17px calc(10px + env(safe-area-inset-bottom));background:#0b0b0bf2;border-top:1px solid var(--line);backdrop-filter:blur(14px)}
 .ai-compose .money-input{font-size:14px}
 .ai-compose .save{margin-top:7px}
+
+
+/* Alignment pass */
+.page-title-row{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:28px}
+.page-title-row h1{margin:9px 0 0}
+.page-title-row .save-inline{width:auto;min-width:70px;margin-top:9px;padding:10px 14px}
+.todoAdd{display:flex;align-items:center;gap:8px;margin-top:8px}
+.todoAdd .money-input{flex:1;min-width:0}
+.todoAdd .save-inline{width:auto;min-width:72px;margin-top:0}
+.todoRow{display:flex;align-items:center;gap:10px}
+.todoRow > div{min-width:0}
+.todoRow .close{margin-left:auto;flex:0 0 auto}
+.profileGrid > *{min-width:0}
+.ai-panel{top:76px;bottom:86px;left:50%;right:auto;transform:translateX(-50%);width:100%;max-width:480px;border-left:1px solid var(--line);border-right:1px solid var(--line)}
+.ai-head{padding:18px 17px 14px;flex:0 0 auto}
+.ai-messages{min-height:0}
+.ai-compose{position:absolute}
+@media(max-width:599px){
+  .ai-panel{top:76px;bottom:86px;max-width:none}
+}
