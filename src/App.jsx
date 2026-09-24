@@ -25,7 +25,26 @@ const tokenExpiry=s=>{try{return JSON.parse(atob(s.access_token.split('.')[1].re
 async function authRequest(path,body,token){const r=await fetch(SUPABASE_URL+'/auth/v1/'+path,{method:token?'PUT':'POST',headers:headers(token),body:JSON.stringify(body)});const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.msg||d.error_description||d.message||'Authentication failed');return d}
 const persistSession=s=>{if(s?.access_token)write('forgeSession',JSON.stringify(s));return s}
 async function refreshSession(s){if(!s?.refresh_token)return null;return persistSession(await authRequest('token?grant_type=refresh_token',{refresh_token:s.refresh_token}))}
-async function usernameAuth(action,username,password){const r=await fetch('/.netlify/functions/auth',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,username,password})});const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.error||'Authentication failed');return persistSession(d.session)}
+async function usernameAuth(action,username,password){
+  const normalized=username.trim().normalize('NFKC').toLowerCase();
+  const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(normalized));
+  const id=Array.from(new Uint8Array(digest),b=>b.toString(16).padStart(2,'0')).join('');
+  const email=`u-${id}@users.forge.invalid`;
+  const path=action==='signup'?'signup':'token?grant_type=password';
+  const body=action==='signup'?{email,password,data:{username:username.trim()}}:{email,password};
+  let d;
+  try{d=await authRequest(path,body)}catch(e){
+    const message=e.message||'';
+    if(action==='signup'&&/already|registered|exists|user.*found/i.test(message))throw Error('That username is already in use.');
+    if(action==='signin')throw Error('Username or password is incorrect.');
+    throw e;
+  }
+  if(!d.access_token){
+    if(action==='signup')throw Error('Supabase email confirmation is enabled, so signup could not start a session. Disable email confirmation in Supabase before creating username-only accounts.');
+    throw Error('Username or password is incorrect.');
+  }
+  return persistSession(d);
+}
 async function db(token,path,options={}){const r=await fetch(SUPABASE_URL+'/rest/v1/'+path,{...options,headers:{...headers(token),...(options.headers||{})}});if(!r.ok)throw Error(await r.text());return r.status===204?null:r.json()}
 
 function AuthGate({onReady}){const [mode,setMode]=useState('signin');const [username,setUsername]=useState('');const [password,setPassword]=useState('');const [busy,setBusy]=useState(false);const [error,setError]=useState('');const submit=async e=>{e.preventDefault();setBusy(true);setError('');try{if(!username.trim()||!password)throw Error('Enter your username and password.');if(mode==='signup'&&password.length<8)throw Error('Use a password with at least 8 characters.');const s=await usernameAuth(mode,username,password);onReady(s)}catch(e){setError(e.message)}finally{setBusy(false)}};return <div className="authGate"><form className="authCard" onSubmit={submit}><div className="logo">FORGE<span>●</span></div><div className="eyebrow authEyebrow">{mode==='signup'?'CREATE YOUR ACCOUNT':'WELCOME BACK'}</div><h1>{mode==='signup'?<>Train.<br/>Track.<br/>Forge.</>:<>Your training.<br/>Your account.</>}</h1><p>{mode==='signup'?'Choose a username and password to sync your training across devices.':'Sign in to continue your training.'}</p><label className="authLabel">Username<input className="money-input authInput" autoComplete="username" required maxLength={80} value={username} onChange={e=>setUsername(e.target.value)} /></label><label className="authLabel">Password<input className="money-input authInput" type="password" autoComplete={mode==='signup'?'new-password':'current-password'} minLength={mode==='signup'?8:1} required value={password} onChange={e=>setPassword(e.target.value)} /></label>{error&&<p className="error" role="alert">{error}</p>}<button className="save" disabled={busy}>{busy?'PLEASE WAIT…':mode==='signup'?'CREATE ACCOUNT':'SIGN IN'}</button><div className="authLinks"><button type="button" onClick={()=>{setMode(mode==='signup'?'signin':'signup');setError('')}}>{mode==='signup'?'Already have an account? Sign in':'New to Forge? Create account'}</button></div></form></div>}
