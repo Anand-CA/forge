@@ -181,7 +181,7 @@ function ForgeAI({session,day,exercises,exerciseConfig,diet,onExerciseAction,onD
     setMessage('');
     setBusy(true);
     try{
-      const r=await fetch(SUPABASE_URL+'/functions/v1/forge-ai',{
+      const r=await fetch(SUPABASE_URL+'/functions/v1/forge-api',{
         method:'POST',
         headers:headers(session),
         body:JSON.stringify({message:text,context})
