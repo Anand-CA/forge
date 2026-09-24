@@ -201,10 +201,10 @@ function ForgeAI({session,day,exercises,exerciseConfig,diet,onExerciseAction,onD
     }finally{setBusy(false)}
   };
 
-  if(!open)return <button className="ai-fab" onClick={()=>setOpen(true)}><span>✦</span> FORGE API</button>;
+  if(!open)return <button className="ai-fab" onClick={()=>setOpen(true)}><span>✦</span> FORGE AI</button>;
 
   return <div className="ai-panel">
-    <div className="ai-head"><div><div className="eyebrow">FORGE API</div><h2>Tell Forge what to change.</h2></div><button className="close" onClick={()=>setOpen(false)}>×</button></div>
+    <div className="ai-head"><div><div className="eyebrow">FORGE AI</div><h2>Tell Forge what to change.</h2></div><button className="close" onClick={()=>setOpen(false)}>×</button></div>
     <div className="ai-messages">{messages.map((m,i)=><div key={i} className={'ai-message '+m.role}>{m.text}</div>)}</div>
     <div className="ai-compose"><input className="money-input" placeholder="e.g. Make bench press 4 × 8" value={message} onChange={e=>setMessage(e.target.value)} onKeyDown={e=>{if(e.key==='Enter')send()}}/><button className="save" disabled={busy} onClick={send}>{busy?'THINKING…':'SEND'}</button></div>
   </div>;
