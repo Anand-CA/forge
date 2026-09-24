@@ -130,6 +130,7 @@ function AddExercise({onAdd}){const [open,setOpen]=useState(false);const [name,s
 
 function Profile({session,onProfileUpdate}){
   const meta=session?.user?.user_metadata;
+  const username=meta?.username||'';
   const [editing,setEditing]=useState(false);
   const [p,setP]=useState(()=>{
     const local=read('forgeProfile',{name:'',height:'177',weight:'75',goal:'Lean bulk',activity:'Work from home'});
@@ -197,6 +198,7 @@ function Profile({session,onProfileUpdate}){
       <div className="exercise">
         <div className="eyebrow">IDENTITY</div>
         <div className="name">{p.name||'Your name'}</div>
+        <div className="profileUsername"><span>USERNAME</span><b>{username?`@${username}`:'Not set'}</b></div>
       </div>
 
       <div className="exercise">
@@ -238,7 +240,7 @@ function Profile({session,onProfileUpdate}){
         </select>
       </div>
 
-      <div className="todoAdd">
+      <div className="profileActions">
         <button className="save-inline" onClick={()=>setEditing(false)} disabled={saving}>CANCEL</button>
         <button className="save" disabled={saving} onClick={save}>{saving?'SAVING…':'SAVE PROFILE'}</button>
       </div>

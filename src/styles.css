@@ -6,7 +6,7 @@ body{min-height:100dvh}
 button,input{font:inherit}
 button{color:inherit}
 .app{width:100%;max-width:480px;min-height:100dvh;margin:auto;background:var(--bg);position:relative;overflow:hidden}
-.topbar{height:76px;padding:env(safe-area-inset-top) 18px 0;display:flex;align-items:flex-end;padding-bottom:14px;justify-content:space-between;border-bottom:1px solid var(--line);position:sticky;top:0;background:#0b0b0bee;backdrop-filter:blur(16px);z-index:10}
+.topbar{height:76px;padding:env(safe-area-inset-top) 18px 0;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);position:sticky;top:0;background:#0b0b0bee;backdrop-filter:blur(16px);z-index:10}
 .logo{font-size:18px;font-weight:950;letter-spacing:-.06em}.logo span{color:var(--accent)}
 .iconbtn{width:38px;height:38px;border:1px solid var(--line);border-radius:50%;background:var(--surface);display:grid;place-items:center}
 main{padding:24px 17px calc(105px + env(safe-area-inset-bottom))}
@@ -52,9 +52,9 @@ h2{font-size:24px;letter-spacing:-.05em;margin:0}
 
 
 /* Alignment pass */
-.page-title-row{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:28px}
+.page-title-row{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:28px}
 .page-title-row h1{margin:9px 0 0}
-.page-title-row .save-inline{width:auto;min-width:70px;margin-top:9px;padding:10px 14px}
+.page-title-row .save-inline{width:auto;min-width:68px;height:34px;margin:0;padding:0 13px;align-self:center}
 .todoAdd{display:flex;align-items:center;gap:8px;margin-top:8px}
 .todoAdd .money-input{flex:1;min-width:0}
 .todoAdd .save-inline{width:auto;min-width:72px;margin-top:0}
@@ -62,6 +62,11 @@ h2{font-size:24px;letter-spacing:-.05em;margin:0}
 .todoRow > div{min-width:0}
 .todoRow .close{margin-left:auto;flex:0 0 auto}
 .profileGrid > *{min-width:0}
+.profileUsername{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:12px;padding-top:10px;border-top:1px solid var(--line)}
+.profileUsername span{font-size:9px;font-weight:800;letter-spacing:.12em;color:var(--muted)}
+.profileUsername b{font-size:13px;font-weight:750;color:var(--accent)}
+.profileActions{display:flex;align-items:center;gap:9px;margin-top:8px}
+.profileActions button{flex:1;width:auto;height:42px;margin:0;padding:0 12px;display:inline-flex;align-items:center;justify-content:center}
 .ai-panel{top:76px;bottom:86px;left:50%;right:auto;transform:translateX(-50%);width:100%;max-width:480px;border-left:1px solid var(--line);border-right:1px solid var(--line)}
 .ai-head{padding:18px 17px 14px;flex:0 0 auto}
 .ai-messages{min-height:0}
