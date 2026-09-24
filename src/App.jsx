@@ -283,7 +283,7 @@ export default function App(){
         if(newName!==oldName)setSaved(prev=>{const n={...prev};if(n[oldName]!==undefined){n[newName]=n[oldName];delete n[oldName]}localStorage.setItem('forgeMobile',JSON.stringify(n));return n});
         if(newName!==oldName||newMuscle!==oldMuscle)updateExerciseConfig(newName,{...(exerciseConfig[oldName]||{}),...(args.sets?{sets:Number(args.sets)}:{}),...(args.reps?{reps:Number(args.reps)}:{})});
       }
-      updateExerciseConfig(newName,{sets:args.sets?Math.max(1,Math.min(12,Number(args.sets))):Number(exerciseConfig[oldName]?.sets||3),reps:args.reps?Math.max(1,100,Number(args.reps)):Number(exerciseConfig[oldName]?.reps||8)});
+      updateExerciseConfig(newName,{sets:args.sets?Math.max(1,Math.min(12,Number(args.sets))):Number(exerciseConfig[oldName]?.sets||3),reps:args.reps?Math.max(1,Math.min(100,Number(args.reps))):Number(exerciseConfig[oldName]?.reps||8)});
       if(args.weight!==undefined){
         const count=Number(args.sets||exerciseConfig[oldName]?.sets||3);
         setSaved(prev=>{const n={...prev,[newName]:Array.from({length:count},()=>Number(args.weight)||0)};localStorage.setItem('forgeMobile',JSON.stringify(n));return n});
