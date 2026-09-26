@@ -196,8 +196,6 @@ function Profile({session,onProfileUpdate}){
 
     {!editing ? <>
       <div className="exercise">
-        <div className="eyebrow">IDENTITY</div>
-        <div className="name">{p.name||'Your name'}</div>
         <div className="profileUsername"><span>USERNAME</span><b>{username?`@${username}`:'Not set'}</b></div>
       </div>
 
@@ -216,11 +214,6 @@ function Profile({session,onProfileUpdate}){
         <div className="name">{p.activity}</div>
       </div>
     </> : <>
-      <div className="exercise">
-        <div className="eyebrow">IDENTITY</div>
-        <input className="money-input" placeholder="Your name" value={p.name} onChange={e=>setP({...p,name:e.target.value})}/>
-      </div>
-
       <div className="exercise">
         <div className="eyebrow">BODY</div>
         <div className="profileGrid">
